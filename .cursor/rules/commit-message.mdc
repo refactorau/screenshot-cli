@@ -1,0 +1,248 @@
+---
+description: git commit messages
+globs: 
+alwaysApply: false
+---
+# Conventional Commits Guide
+
+## Purpose
+This rule enforces the Conventional Commits specification for consistent, semantic commit messages that enable automated tooling for changelogs, versioning, and release management.
+
+## When to Use
+- Before every commit to ensure proper message formatting
+- When writing commit messages for any code changes
+- When reviewing pull requests for commit message quality
+- When setting up automated release workflows
+
+## Commit Message Structure
+
+### Basic Format
+<type>[optional scope]: <description>
+[optional body]
+[optional footer(s)]
+
+### Required Elements
+- **type**: Describes the kind of change (required)
+- **description**: Brief summary in imperative mood (required)
+- **scope**: Section of codebase affected (optional)
+- **body**: Detailed explanation (optional)
+- **footer**: Metadata like breaking changes (optional)
+
+## Commit Types
+
+### Primary Types
+- **feat**: New feature for the user
+  ```
+  feat: add user authentication with Discord OAuth
+  feat(auth): implement session management
+  ```
+
+- **fix**: Bug fix for the user
+  ```
+  fix: resolve timezone display bug in dashboard
+  fix(api): handle null response from task endpoint
+  ```
+
+### Secondary Types
+- **docs**: Documentation only changes
+  ```
+  docs: update API documentation for task endpoints
+  docs(readme): add installation instructions
+  ```
+
+- **style**: Code style changes (formatting, missing semicolons, etc.)
+  ```
+  style: fix linting errors in Settings component
+  style(css): organize Tailwind classes alphabetically
+  ```
+
+- **refactor**: Code change that neither fixes bug nor adds feature
+  ```
+  refactor: extract timezone utilities to separate module
+  refactor(hooks): simplify useModal implementation
+  ```
+
+- **perf**: Performance improvement
+  ```
+  perf: optimize timezone dropdown rendering
+  perf(query): add memoization to task list queries
+  ```
+
+- **test**: Adding or updating tests
+  ```
+  test: add unit tests for timezone utilities
+  test(integration): add Settings page component tests
+  ```
+
+- **build**: Changes to build system or dependencies
+  ```
+  build: update React to version 18.2
+  build(deps): upgrade TanStack Query to v5
+  ```
+
+- **ci**: Changes to CI configuration files and scripts
+  ```
+  ci: add automated testing workflow
+  ci(deploy): update Cloudflare Workers deployment
+  ```
+
+- **chore**: Other changes that don't modify src or test files
+  ```
+  chore: update package.json metadata
+  chore(config): add new ESLint rules
+  ```
+
+## Scopes by Area
+
+### Frontend (`apps/web`)
+- `auth` - Authentication related changes
+- `ui` - User interface components
+- `hooks` - Custom React hooks
+- `pages` - Page components (Dashboard, Settings, etc.)
+- `components` - Reusable components
+- `api` - API integration and data fetching
+- `utils` - Utility functions
+- `types` - TypeScript type definitions
+
+### Backend (`apps/api`)
+- `api` - API endpoints and routes
+- `db` - Database operations and schema
+- `auth` - Authentication middleware
+- `workers` - Cloudflare Workers specific code
+- `migration` - Database migrations
+
+### Examples with Scopes
+feat(auth): implement Discord OAuth integration
+fix(ui): resolve modal z-index stacking issue
+refactor(hooks): extract Settings state management
+docs(api): document task submission endpoints
+test(components): add Modal component test suite
+
+## Breaking Changes
+
+### Using `!` Notation
+feat!: remove deprecated notification API
+feat(api)!: change task response format
+
+### Using Footer
+feat: add new task filtering options
+BREAKING CHANGE: The task API now requires a status parameter
+
+## Description Guidelines
+
+### Writing Style
+- Use **imperative mood** (present tense, command form)
+- Start with lowercase letter
+- No period at the end
+- Maximum 50 characters for the subject line
+
+### Good Examples
+feat: add timezone auto-detection
+fix: prevent duplicate reminder creation
+docs: update component usage examples
+refactor: simplify modal state management
+
+### Bad Examples
+feat: Added timezone auto-detection // Past tense
+fix: Prevent duplicate reminder creation // Capitalized
+docs: update component usage examples. // Period at end
+refactor: simplified modal state management // Past tense
+## Body and Footer Guidelines
+
+### Body Format
+- Separate from subject with blank line
+- Wrap at 72 characters
+- Explain **what** and **why**, not **how**
+- Use imperative mood
+
+### Footer Format
+- Separate from body with blank line
+- Use for breaking changes, issue references, co-authors
+- Format: `token: value` or `token #value`
+
+### Complete Example
+feat(notifications): add push notification support
+Implement browser push notifications for task reminders.
+Users can now receive notifications even when the app is closed.
+The notification system uses the Web Push API and requires
+user permission. Fallback to in-app notifications when
+permission is denied.
+BREAKING CHANGE: The notification settings API has changed
+Closes: #123
+Co-authored-by: Jane Doe <jane@example.com>
+
+## Project-Specific Patterns
+
+### Settings Refactoring
+refactor(settings): extract TimezoneSettings component
+refactor(settings): create useTimezoneSettings hook
+feat(settings): add SettingsSection wrapper component
+fix(settings): resolve reminder validation bug
+
+### Modal System
+feat(ui): create reusable Modal component system
+refactor(modals): replace inline modals with shared components
+fix(modals): prevent body scroll when modal is open
+
+### Task Management
+feat(tasks): add bulk task operations
+fix(tasks): resolve task completion state bug
+perf(tasks): optimize task list rendering
+
+## Validation Checklist
+
+Before committing, verify:
+- [ ] Type is from the approved list
+- [ ] Description uses imperative mood
+- [ ] Description starts with lowercase
+- [ ] Subject line is under 50 characters
+- [ ] Body wraps at 72 characters (if present)
+- [ ] Breaking changes are properly marked
+- [ ] Scope matches the affected area (if used)
+
+## Tools Integration
+
+### Pre-commit Validation
+```bash
+# Check if commit follows conventional format
+npm run commitlint
+
+# Use interactive commit tool
+npm run commit
+```
+
+### Generated Changelog
+These commit types will appear in changelogs:
+- `feat` → Features section
+- `fix` → Bug Fixes section
+- `perf` → Performance section
+- `BREAKING CHANGE` → Breaking Changes section
+
+### Semantic Versioning
+- `fix` → PATCH version (1.0.1)
+- `feat` → MINOR version (1.1.0)
+- `BREAKING CHANGE` → MAJOR version (2.0.0)
+
+## Common Mistakes to Avoid
+
+❌ **Wrong verb tense**
+fix: fixed the timezone bug // Should be: fix: resolve timezone bug
+
+❌ **Vague description**
+fix: bug fix // Should be: fix: resolve reminder validation error
+
+❌ **Missing type**
+update user profile // Should be: feat: update user profile
+
+❌ **Wrong type**
+feat: fix typo in documentation // Should be: docs: fix typo in documentation
+
+## Emergency Fixes
+
+For critical hotfixes, use:
+fix!: resolve critical security vulnerability
+fix(auth): prevent unauthorized access to user data
+BREAKING CHANGE: All existing sessions will be invalidated
+---
+
+**Reference**: [Conventional Commits v1.0.0](mdc:https:/www.conventionalcommits.org/en/v1.0.0)
