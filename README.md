@@ -22,7 +22,7 @@ A TypeScript CLI tool that takes screenshots of web pages and generates styled H
 
 ```bash
 # Clone and install dependencies
-git clone <git@github.com:refactorau/screenshot-cli.git>
+git clone git@github.com:refactorau/screenshot-cli.git
 cd screenshot-cli
 pnpm install
 
