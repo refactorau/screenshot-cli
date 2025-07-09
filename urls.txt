@@ -1,0 +1,5 @@
+https://example.com
+https://httpbin.org/html
+https://jsonplaceholder.typicode.com/
+# This is a comment - it will be ignored
+https://github.com 

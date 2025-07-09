@@ -1,0 +1,57 @@
+{
+  "name": "screenshot-cli",
+  "version": "0.1.0",
+  "description": "CLI tool for taking website screenshots with before/after comparison and HTML/PDF report generation",
+  "keywords": [
+    "screenshot",
+    "web",
+    "cli",
+    "playwright",
+    "testing",
+    "comparison",
+    "before-after",
+    "html",
+    "pdf"
+  ],
+  "main": "dist/index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/refactorau/screenshot-cli.git"
+  },
+  "author": "RefactorAU",
+  "bin": {
+    "screenshot-cli": "./bin/screenshot-cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "ts-node src/index.ts",
+    "capture": "node dist/index.js capture",
+    "generate": "node dist/index.js generate",
+    "clean": "rm -rf dist"
+  },
+  "files": [
+    "dist/**/*",
+    "bin/**/*",
+    "README.md"
+  ],
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "commander": "^11.1.0",
+    "inquirer": "^9.2.0",
+    "ora": "^7.0.1",
+    "pdfkit": "^0.17.1",
+    "playwright": "^1.40.0"
+  },
+  "devDependencies": {
+    "@types/inquirer": "^9.0.0",
+    "@types/node": "^20.0.0",
+    "@types/pdfkit": "^0.14.0",
+    "ts-node": "^10.9.0",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=9.0.0"
+  },
+  "packageManager": "pnpm@9.15.0"
+}
