@@ -244,9 +244,28 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - ❌ No warranty provided
 - ❌ No liability assumed
 
+## Versioning
+
+This project follows [Semantic Versioning (SemVer)](https://semver.org/) guidelines:
+
+- **MAJOR** version for incompatible API changes
+- **MINOR** version for backward-compatible functionality additions
+- **PATCH** version for backward-compatible bug fixes
+
+### Version History
+
+- **v1.0.0** - Initial stable release with full feature set
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
+
+When contributing:
+
+- Follow the existing code style and patterns
+- Write clear commit messages using [Conventional Commits](https://www.conventionalcommits.org/)
+- Ensure all tests pass and functionality works as expected
+- Update documentation if needed
 
 ## Support
 
