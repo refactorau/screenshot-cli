@@ -230,3 +230,24 @@ The tool saves all screenshot data and metadata to `.jsonc` files, allowing you 
 - Archive screenshot sessions with full metadata
 
 This separation of capture and generation phases makes the tool more efficient and flexible for different workflows.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+**MIT License Summary:**
+
+- ✅ Commercial use allowed
+- ✅ Private use allowed
+- ✅ Modification allowed
+- ✅ Distribution allowed
+- ❌ No warranty provided
+- ❌ No liability assumed
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## Support
+
+For issues and questions, please use the [GitHub Issues](https://github.com/refactorau/screenshot-cli/issues) page.

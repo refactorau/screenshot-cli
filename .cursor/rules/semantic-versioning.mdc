@@ -1,0 +1,402 @@
+---
+description: Semantic Versioning (SemVer) guidelines for project versioning
+globs:
+alwaysApply: false
+---
+
+# Semantic Versioning (SemVer) 2.0.0 Guide
+
+## Purpose
+
+This rule enforces strict adherence to Semantic Versioning specification for consistent, meaningful version numbers that convey compatibility and change impact to users and automated systems.
+
+## When to Use
+
+- Before releasing any new version of the project
+- When determining version numbers for package.json updates
+- When creating git tags for releases
+- When planning breaking changes vs feature additions
+- When evaluating dependency updates
+
+## Version Format
+
+### Basic Structure
+
+**MAJOR.MINOR.PATCH** (e.g., 1.4.2)
+
+### With Pre-release and Build Metadata
+
+**MAJOR.MINOR.PATCH-PRERELEASE+BUILD** (e.g., 1.4.2-alpha.1+20231215)
+
+## Version Components
+
+### MAJOR Version (X.y.z)
+
+**Increment when**: Making incompatible API changes
+
+**Examples**:
+
+- Removing or renaming public functions/classes
+- Changing function signatures (parameters, return types)
+- Removing command-line options or flags
+- Changing default behavior that breaks existing usage
+- Removing or renaming configuration options
+
+**Project-specific examples**:
+
+```
+1.0.0 → 2.0.0: Remove deprecated --legacy-mode flag
+1.5.2 → 2.0.0: Change screenshot file naming convention
+1.8.0 → 2.0.0: Require Node.js 20+ (breaking compatibility)
+```
+
+### MINOR Version (x.Y.z)
+
+**Increment when**: Adding functionality in a backward-compatible manner
+
+**Examples**:
+
+- Adding new command-line options with defaults
+- Adding new API methods or properties
+- Adding new configuration options
+- Deprecating functionality (but not removing it)
+- Substantial internal improvements
+
+**Project-specific examples**:
+
+```
+1.0.0 → 1.1.0: Add --report-type pdf option
+1.2.0 → 1.3.0: Add before/after comparison mode
+1.4.0 → 1.5.0: Add JavaScript file URL input support
+```
+
+### PATCH Version (x.y.Z)
+
+**Increment when**: Making backward-compatible bug fixes
+
+**Examples**:
+
+- Fixing crashes or errors
+- Correcting incorrect behavior
+- Performance improvements without API changes
+- Security fixes that don't break compatibility
+- Documentation corrections
+
+**Project-specific examples**:
+
+```
+1.0.0 → 1.0.1: Fix screenshot timeout handling
+1.2.3 → 1.2.4: Resolve PDF generation memory leak
+1.5.0 → 1.5.1: Fix URL sanitization edge case
+```
+
+## Pre-release Versions
+
+### Format
+
+**MAJOR.MINOR.PATCH-PRERELEASE**
+
+### Pre-release Identifiers
+
+- `alpha` - Early development, unstable
+- `beta` - Feature complete, testing phase
+- `rc` (release candidate) - Potentially final, awaiting approval
+
+### Pre-release Progression
+
+```
+1.0.0-alpha        # Initial alpha
+1.0.0-alpha.1      # Alpha iteration
+1.0.0-alpha.2      # Alpha iteration
+1.0.0-beta         # Beta phase
+1.0.0-beta.1       # Beta iteration
+1.0.0-rc.1         # Release candidate
+1.0.0-rc.2         # Release candidate
+1.0.0              # Final release
+```
+
+## Build Metadata
+
+### Format
+
+**MAJOR.MINOR.PATCH+BUILD**
+
+### Build Metadata Examples
+
+```
+1.0.0+20231215           # Build date
+1.0.0+exp.sha.5114f85    # Experimental with git hash
+1.0.0-beta+001           # Pre-release with build number
+```
+
+**Important**: Build metadata does NOT affect version precedence.
+
+## Version Precedence Rules
+
+### Basic Precedence
+
+1. **1.0.0** < **2.0.0** (Major)
+2. **1.0.0** < **1.1.0** (Minor)
+3. **1.0.0** < **1.0.1** (Patch)
+
+### Pre-release Precedence
+
+1. **1.0.0-alpha** < **1.0.0** (Pre-release < Normal)
+2. **1.0.0-alpha** < **1.0.0-alpha.1** (Fewer identifiers < More identifiers)
+3. **1.0.0-alpha.1** < **1.0.0-alpha.beta** (Numeric < Non-numeric)
+4. **1.0.0-beta** < **1.0.0-beta.2** (Lexical comparison)
+5. **1.0.0-beta.2** < **1.0.0-beta.11** (Numeric comparison)
+6. **1.0.0-rc.1** < **1.0.0** (Pre-release < Normal)
+
+## Initial Development Phase
+
+### Version 0.y.z
+
+- **0.1.0** - Initial development release
+- **0.y.z** - Anything may change at any time
+- **Public API should NOT be considered stable**
+
+### When to Release 1.0.0
+
+- Software is used in production
+- Stable API that users depend on
+- Concerned about backward compatibility
+- Ready to commit to API stability
+
+## Version Increment Decision Tree
+
+### 1. Does the change break existing functionality?
+
+**YES** → **MAJOR** version increment
+
+- Remove features, change APIs, alter behavior
+- Example: `1.5.3 → 2.0.0`
+
+### 2. Does the change add new functionality?
+
+**YES** → **MINOR** version increment
+
+- New features, options, or capabilities
+- Example: `1.5.3 → 1.6.0`
+
+### 3. Does the change fix bugs without adding features?
+
+**YES** → **PATCH** version increment
+
+- Bug fixes, performance improvements
+- Example: `1.5.3 → 1.5.4`
+
+## Project-Specific Versioning Guidelines
+
+### Screenshot CLI Context
+
+#### MAJOR Version Changes
+
+- Remove or rename CLI commands (`capture`, `generate`)
+- Change screenshot file naming conventions
+- Remove or change report format structure
+- Change Node.js version requirements (breaking)
+- Remove or rename configuration file format
+
+#### MINOR Version Changes
+
+- Add new CLI commands or subcommands
+- Add new command-line options
+- Add new report types (HTML, PDF, etc.)
+- Add new input file formats
+- Add new screenshot modes or features
+- Deprecate existing functionality
+
+#### PATCH Version Changes
+
+- Fix screenshot capture bugs
+- Fix report generation issues
+- Improve error handling
+- Fix timeout or retry logic
+- Security fixes
+- Performance improvements
+
+### Package.json Integration
+
+#### Version Field
+
+```json
+{
+  "version": "1.4.2"
+}
+```
+
+#### Scripts for Version Management
+
+```json
+{
+  "scripts": {
+    "version:patch": "npm version patch",
+    "version:minor": "npm version minor",
+    "version:major": "npm version major",
+    "version:prerelease": "npm version prerelease"
+  }
+}
+```
+
+## Git Tagging Strategy
+
+### Tag Format
+
+```bash
+# Release versions
+git tag v1.0.0
+git tag v1.2.3
+
+# Pre-release versions
+git tag v1.0.0-alpha.1
+git tag v1.0.0-beta
+git tag v1.0.0-rc.1
+```
+
+### Tagging Workflow
+
+```bash
+# 1. Update version in package.json
+npm version minor
+
+# 2. Create annotated tag
+git tag -a v1.2.0 -m "Release v1.2.0: Add PDF report generation"
+
+# 3. Push commits and tags
+git push origin main
+git push origin v1.2.0
+```
+
+## Validation Checklist
+
+Before releasing a new version:
+
+- [ ] **Public API documented** - All public interfaces are clearly defined
+- [ ] **Breaking changes identified** - Any incompatible changes noted
+- [ ] **Version incremented correctly** - Follows MAJOR.MINOR.PATCH rules
+- [ ] **Pre-release format valid** - If using pre-release identifiers
+- [ ] **Git tag created** - Annotated tag with proper format
+- [ ] **Changelog updated** - Version changes documented
+- [ ] **Dependencies compatible** - No conflicts with new version
+- [ ] **Tests passing** - All functionality verified
+- [ ] **Documentation updated** - README and docs reflect new version
+
+## Common Mistakes to Avoid
+
+❌ **Using leading zeros**
+
+```
+1.01.0  # Wrong
+1.1.0   # Correct
+```
+
+❌ **Incorrect pre-release format**
+
+```
+1.0.0-Alpha  # Wrong (capital A)
+1.0.0-alpha  # Correct
+```
+
+❌ **Missing version increments**
+
+```
+1.0.0 → 1.0.0  # Wrong (no increment)
+1.0.0 → 1.0.1  # Correct
+```
+
+❌ **Wrong increment type**
+
+```
+1.0.0 → 1.0.1  # Wrong (breaking change should be major)
+1.0.0 → 2.0.0  # Correct
+```
+
+❌ **Modifying released versions**
+
+```
+# Never modify already released versions
+# Always create new version for changes
+```
+
+## Emergency Procedures
+
+### Hotfix Process
+
+1. **Identify critical bug** in production release
+2. **Create hotfix branch** from latest release tag
+3. **Apply minimal fix** - only address the critical issue
+4. **Increment PATCH version** - maintain backward compatibility
+5. **Test thoroughly** - ensure fix doesn't break anything
+6. **Release immediately** - fast-track the hotfix
+
+### Hotfix Example
+
+```bash
+# Current release: v1.2.3
+# Critical bug found
+
+# 1. Create hotfix branch
+git checkout -b hotfix/1.2.4 v1.2.3
+
+# 2. Apply fix and test
+# ... make minimal changes ...
+
+# 3. Update version
+npm version patch  # 1.2.3 → 1.2.4
+
+# 4. Create tag and release
+git tag -a v1.2.4 -m "Hotfix v1.2.4: Fix critical screenshot timeout bug"
+git push origin hotfix/1.2.4
+git push origin v1.2.4
+```
+
+## Tools and Automation
+
+### Version Validation
+
+```bash
+# Check if version follows SemVer
+npm run validate-version
+
+# Pre-commit hook for version validation
+npm run pre-commit
+```
+
+### Automated Release
+
+```bash
+# Generate changelog from commits
+npm run changelog
+
+# Automated release process
+npm run release
+```
+
+## FAQ
+
+### Q: How do I handle API deprecation?
+
+**A**: Use MINOR version increment, document deprecation, remove in next MAJOR.
+
+### Q: What about internal code changes?
+
+**A**: If public API unchanged, use PATCH for fixes, MINOR for features.
+
+### Q: Can I skip version numbers?
+
+**A**: No, versions must increment sequentially (1.0.0 → 1.0.1 → 1.0.2).
+
+### Q: How do I handle security fixes?
+
+**A**: Use PATCH increment unless fix requires breaking changes (then MAJOR).
+
+### Q: What about performance improvements?
+
+**A**: Usually PATCH, unless they add new functionality (MINOR).
+
+---
+
+**Reference**: [Semantic Versioning 2.0.0 Specification](https://semver.org/)
+
+**Compliance**: This rule enforces strict adherence to SemVer specification for consistent, meaningful version management in software projects.
