@@ -8,7 +8,15 @@ import { resolve, dirname, basename } from 'path';
 import { Screenshotter } from './screenshotter';
 import { HtmlGenerator } from './html-generator';
 import { loadUrlsFromFile, formatDuration } from './utils';
-import { ScreenshotOptions, ScreenshotResult, ReportData, ReportType, GenerateOptions, generateFilenames, DataFile } from './types';
+import {
+  ScreenshotOptions,
+  ScreenshotResult,
+  ReportData,
+  ReportType,
+  GenerateOptions,
+  generateFilenames,
+  DataFile,
+} from './types';
 import { DataPersistence } from './data-persistence';
 import { PDFGenerator } from './pdf-generator';
 import packageJson from '../package.json';
@@ -17,9 +25,7 @@ const program = new Command();
 
 program
   .name('screenshot-cli')
-  .description(
-    'CLI tool for taking website screenshots with before/after comparison'
-  )
+  .description('CLI tool for taking website screenshots with before/after comparison')
   .version(packageJson.version);
 
 // Capture subcommand (main screenshot functionality)
@@ -29,46 +35,18 @@ program
   .option('-u, --urls <urls>', 'Comma-separated list of URLs')
   .option(
     '-f, --file <file>',
-    'Path to file containing URLs (JS file exporting array or text file with one URL per line)'
+    'Path to file containing URLs (JS file exporting array or text file with one URL per line)',
   )
-  .option(
-    '-o, --output <directory>',
-    'Output directory for screenshots',
-    'output'
-  )
+  .option('-o, --output <directory>', 'Output directory for screenshots', 'output')
   .option('-b, --before-after', 'Enable before/after comparison mode')
   .option('-w, --width <width>', 'Viewport width', '1920')
   .option('-h, --height <height>', 'Viewport height', '1080')
-  .option(
-    '-t, --timeout <timeout>',
-    'Page load timeout in milliseconds',
-    '30000'
-  )
-  .option(
-    '-r, --max-retries <retries>',
-    'Maximum retry attempts for network errors',
-    '3'
-  )
-  .option(
-    '--retry-delay <delay>',
-    'Delay between retries in milliseconds',
-    '2000'
-  )
-  .option(
-    '--wait-strategy <strategy>',
-    'Page load wait strategy: networkidle, load, domcontentloaded',
-    'load'
-  )
-  .option(
-    '--report-type <type>',
-    'Report type: html, pdf, all',
-    'html'
-  )
-  .option(
-    '--title <title>',
-    'Report title (used for filenames)',
-    'Report'
-  )
+  .option('-t, --timeout <timeout>', 'Page load timeout in milliseconds', '30000')
+  .option('-r, --max-retries <retries>', 'Maximum retry attempts for network errors', '3')
+  .option('--retry-delay <delay>', 'Delay between retries in milliseconds', '2000')
+  .option('--wait-strategy <strategy>', 'Page load wait strategy: networkidle, load, domcontentloaded', 'load')
+  .option('--report-type <type>', 'Report type: html, pdf, all', 'html')
+  .option('--title <title>', 'Report title (used for filenames)', 'Report')
   .action(async (options) => {
     try {
       const startTime = Date.now();
@@ -83,9 +61,7 @@ program
       } else if (options.urls) {
         urls = options.urls.split(',').map((url: string) => url.trim());
       } else {
-        console.error(
-          chalk.red('❌ Please provide URLs via --urls or --file option')
-        );
+        console.error(chalk.red('❌ Please provide URLs via --urls or --file option'));
         process.exit(1);
       }
 
@@ -132,11 +108,7 @@ program
 
         if (options.beforeAfter) {
           console.log(chalk.yellow('📷 Taking BEFORE screenshots...'));
-          beforeResults = await screenshotter.takeScreenshots(
-            urls,
-            screenshotOptions,
-            'before'
-          );
+          beforeResults = await screenshotter.takeScreenshots(urls, screenshotOptions, 'before');
 
           console.log(chalk.yellow('⏸️  Before screenshots complete!'));
 
@@ -151,28 +123,18 @@ program
 
           if (proceed) {
             console.log(chalk.yellow('📷 Taking AFTER screenshots...'));
-            afterResults = await screenshotter.takeScreenshots(
-              urls,
-              screenshotOptions,
-              'after'
-            );
+            afterResults = await screenshotter.takeScreenshots(urls, screenshotOptions, 'after');
           } else {
             console.log(chalk.gray('❌ Cancelled by user'));
             process.exit(0);
           }
         } else {
           console.log(chalk.yellow('📷 Taking screenshots...'));
-          singleResults = await screenshotter.takeScreenshots(
-            urls,
-            screenshotOptions,
-            'single'
-          );
+          singleResults = await screenshotter.takeScreenshots(urls, screenshotOptions, 'single');
         }
 
         // Merge results for before/after mode
-        const allResults = options.beforeAfter
-          ? mergeBeforeAfterResults(beforeResults, afterResults)
-          : singleResults;
+        const allResults = options.beforeAfter ? mergeBeforeAfterResults(beforeResults, afterResults) : singleResults;
 
         // Generate ReportData for data persistence
         const reportData: ReportData = {
@@ -187,21 +149,21 @@ program
         // Calculate phase timing for before/after mode
         let beforePhase, afterPhase;
         if (options.beforeAfter && beforeResults.length > 0 && afterResults.length > 0) {
-          const beforeStart = Math.min(...beforeResults.map(r => r.timestamp.getTime()));
-          const beforeEnd = Math.max(...beforeResults.map(r => r.timestamp.getTime()));
-          const afterStart = Math.min(...afterResults.map(r => r.timestamp.getTime()));
-          const afterEnd = Math.max(...afterResults.map(r => r.timestamp.getTime()));
+          const beforeStart = Math.min(...beforeResults.map((r) => r.timestamp.getTime()));
+          const beforeEnd = Math.max(...beforeResults.map((r) => r.timestamp.getTime()));
+          const afterStart = Math.min(...afterResults.map((r) => r.timestamp.getTime()));
+          const afterEnd = Math.max(...afterResults.map((r) => r.timestamp.getTime()));
 
           beforePhase = {
             startTime: new Date(beforeStart),
             endTime: new Date(beforeEnd),
-            duration: formatDuration(beforeEnd - beforeStart)
+            duration: formatDuration(beforeEnd - beforeStart),
           };
 
           afterPhase = {
             startTime: new Date(afterStart),
             endTime: new Date(afterEnd),
-            duration: formatDuration(afterEnd - afterStart)
+            duration: formatDuration(afterEnd - afterStart),
           };
         }
 
@@ -217,10 +179,10 @@ program
             height: screenshotOptions.height,
             timeout: screenshotOptions.timeout,
             maxRetries: screenshotOptions.maxRetries ?? 3,
-            retryDelay: screenshotOptions.retryDelay ?? 2000
+            retryDelay: screenshotOptions.retryDelay ?? 2000,
           },
           beforePhase,
-          afterPhase
+          afterPhase,
         );
 
         console.log(chalk.green(`✅ Data file saved: ${filenames.dataFile}`));
@@ -247,11 +209,9 @@ program
         }
 
         const duration = formatDuration(Date.now() - startTime);
-        console.log(
-          chalk.green(`✅ Complete! Screenshot capture and report generation finished in ${duration}`)
-        );
+        console.log(chalk.green(`✅ Complete! Screenshot capture and report generation finished in ${duration}`));
         console.log(chalk.blue(`📄 Data file: ${filenames.dataFile}`));
-        reportsGenerated.forEach(reportPath => {
+        reportsGenerated.forEach((reportPath) => {
           console.log(chalk.blue(`📄 Report: ${reportPath}`));
         });
         console.log(chalk.gray(`📁 Screenshots: ${screenshotOptions.output}/screenshots`));
@@ -259,24 +219,17 @@ program
         await screenshotter.close();
       }
     } catch (error) {
-      console.error(
-        chalk.red('❌ Error:'),
-        error instanceof Error ? error.message : 'Unknown error'
-      );
+      console.error(chalk.red('❌ Error:'), error instanceof Error ? error.message : 'Unknown error');
       process.exit(1);
     }
   });
 
-// Generate subcommand  
+// Generate subcommand
 program
   .command('generate')
   .description('Generate reports from existing data file')
   .argument('<data-file>', 'Path to the data file (.jsonc)')
-  .option(
-    '--report-type <type>',
-    'Report type: html, pdf, all',
-    'html'
-  )
+  .option('--report-type <type>', 'Report type: html, pdf, all', 'html')
   .action(async (dataFilePath: string, options: { reportType: string }) => {
     try {
       console.log(chalk.blue('🚀 Generating report from data file...'));
@@ -290,23 +243,19 @@ program
 
       const generateOptions: GenerateOptions = {
         dataFilePath: resolve(dataFilePath),
-        reportType: options.reportType as ReportType
+        reportType: options.reportType as ReportType,
       };
 
       await generateReportsFromDataFile(generateOptions);
-
     } catch (error) {
-      console.error(
-        chalk.red('❌ Error generating report:'),
-        error instanceof Error ? error.message : 'Unknown error'
-      );
+      console.error(chalk.red('❌ Error generating report:'), error instanceof Error ? error.message : 'Unknown error');
       process.exit(1);
     }
   });
 
 function mergeBeforeAfterResults(
   beforeResults: ScreenshotResult[],
-  afterResults: ScreenshotResult[]
+  afterResults: ScreenshotResult[],
 ): ScreenshotResult[] {
   const merged: ScreenshotResult[] = [];
 
@@ -361,20 +310,23 @@ async function generateHTMLFromDataFile(dataFile: DataFile, outputPath: string):
 
   // Convert DataFile to ReportData format
   const reportData: ReportData = {
-    results: dataFile.results.map(result => ({
+    results: dataFile.results.map((result) => ({
       url: result.url,
-      timestamp: result.timestamp ? new Date(result.timestamp) :
-        result.beforeTimestamp ? new Date(result.beforeTimestamp) : new Date(),
+      timestamp: result.timestamp
+        ? new Date(result.timestamp)
+        : result.beforeTimestamp
+          ? new Date(result.beforeTimestamp)
+          : new Date(),
       singlePath: result.singlePath,
       beforePath: result.beforePath,
       afterPath: result.afterPath,
-      error: result.error || result.beforeError || result.afterError
+      error: result.error || result.beforeError || result.afterError,
     })),
     mode: dataFile.metadata.mode,
     generatedAt: new Date(dataFile.metadata.generatedAt),
     totalUrls: dataFile.metadata.totalUrls,
     successCount: dataFile.metadata.successCount,
-    errorCount: dataFile.metadata.errorCount
+    errorCount: dataFile.metadata.errorCount,
   };
 
   // Generate HTML report using existing generator
@@ -386,4 +338,4 @@ async function generatePDFFromDataFile(dataFile: DataFile, outputPath: string): 
   await pdfGenerator.generateReport(dataFile, outputPath);
 }
 
-program.parse(); 
+program.parse();

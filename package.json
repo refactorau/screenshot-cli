@@ -28,7 +28,8 @@
     "dev": "ts-node src/index.ts",
     "capture": "node dist/index.js capture",
     "generate": "node dist/index.js generate",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "format": "prettier --write \"**/*.{js,ts,json,md}\""
   },
   "files": [
     "dist/**/*",
@@ -48,6 +49,7 @@
     "@types/inquirer": "^9.0.0",
     "@types/node": "^20.0.0",
     "@types/pdfkit": "^0.14.0",
+    "prettier": "^3.6.2",
     "ts-node": "^10.9.0",
     "typescript": "^5.0.0"
   },

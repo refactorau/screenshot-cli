@@ -3,22 +3,22 @@ import { join, basename } from 'path';
 import { ReportData, ScreenshotResult } from './types';
 
 export class HtmlGenerator {
-    async generateReport(data: ReportData, outputPath: string): Promise<string> {
-        const template = await this.getTemplate();
+  async generateReport(data: ReportData, outputPath: string): Promise<string> {
+    const template = await this.getTemplate();
 
-        // Determine if outputPath is a full file path or a directory
-        const isFilePath = outputPath.endsWith('.html');
-        const reportPath = isFilePath ? outputPath : join(outputPath, 'report.html');
-        const baseDir = isFilePath ? outputPath.replace(/[^/\\]*\.html$/, '') : outputPath;
+    // Determine if outputPath is a full file path or a directory
+    const isFilePath = outputPath.endsWith('.html');
+    const reportPath = isFilePath ? outputPath : join(outputPath, 'report.html');
+    const baseDir = isFilePath ? outputPath.replace(/[^/\\]*\.html$/, '') : outputPath;
 
-        const html = await this.populateTemplate(template, data, baseDir);
-        await fs.writeFile(reportPath, html, 'utf-8');
+    const html = await this.populateTemplate(template, data, baseDir);
+    await fs.writeFile(reportPath, html, 'utf-8');
 
-        return reportPath;
-    }
+    return reportPath;
+  }
 
-    private async getTemplate(): Promise<string> {
-        return `<!DOCTYPE html>
+  private async getTemplate(): Promise<string> {
+    return `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -408,48 +408,32 @@ export class HtmlGenerator {
     </script>
 </body>
 </html>`;
-    }
+  }
 
-    private async populateTemplate(
-        template: string,
-        data: ReportData,
-        outputPath: string
-    ): Promise<string> {
-        let html = template;
+  private async populateTemplate(template: string, data: ReportData, outputPath: string): Promise<string> {
+    let html = template;
 
-        // Replace basic placeholders
-        html = html.replace('{{generatedAt}}', data.generatedAt.toLocaleString());
-        html = html.replace('{{totalUrls}}', data.totalUrls.toString());
-        html = html.replace('{{successCount}}', data.successCount.toString());
-        html = html.replace('{{errorCount}}', data.errorCount.toString());
-        html = html.replace(
-            '{{mode}}',
-            data.mode === 'before-after' ? 'Before/After' : 'Single'
-        );
+    // Replace basic placeholders
+    html = html.replace('{{generatedAt}}', data.generatedAt.toLocaleString());
+    html = html.replace('{{totalUrls}}', data.totalUrls.toString());
+    html = html.replace('{{successCount}}', data.successCount.toString());
+    html = html.replace('{{errorCount}}', data.errorCount.toString());
+    html = html.replace('{{mode}}', data.mode === 'before-after' ? 'Before/After' : 'Single');
 
-        // Generate results HTML
-        const resultsHtml = await this.generateResultsHtml(
-            data.results,
-            data.mode,
-            outputPath
-        );
-        html = html.replace('{{results}}', resultsHtml);
+    // Generate results HTML
+    const resultsHtml = await this.generateResultsHtml(data.results, data.mode, outputPath);
+    html = html.replace('{{results}}', resultsHtml);
 
-        return html;
-    }
+    return html;
+  }
 
-    private async generateResultsHtml(
-        results: ScreenshotResult[],
-        mode: string,
-        outputPath: string
-    ): Promise<string> {
-        const resultItems = results.map((result) => {
-            if (result.error) {
-                return `
+  private async generateResultsHtml(results: ScreenshotResult[], mode: string, outputPath: string): Promise<string> {
+    const resultItems = results.map((result) => {
+      if (result.error) {
+        return `
           <div class="result-item">
             <div class="result-header">
-              <a href="${result.url}" class="url" target="_blank">${result.url
-                    }</a>
+              <a href="${result.url}" class="url" target="_blank">${result.url}</a>
               <div class="timestamp">${result.timestamp.toLocaleString()}</div>
             </div>
             <div class="error">
@@ -457,36 +441,31 @@ export class HtmlGenerator {
             </div>
           </div>
         `;
-            }
+      }
 
-            if (mode === 'before-after') {
-                const beforeImg = result.beforePath
-                    ? `
+      if (mode === 'before-after') {
+        const beforeImg = result.beforePath
+          ? `
           <div class="screenshot-section">
             <div class="screenshot-label">Before</div>
-            <img src="screenshots/${basename(
-                        result.beforePath
-                    )}" alt="Before screenshot" class="screenshot-img">
+            <img src="screenshots/${basename(result.beforePath)}" alt="Before screenshot" class="screenshot-img">
           </div>
         `
-                    : '<div class="screenshot-section"><div class="screenshot-label">Before</div><p>No screenshot available</p></div>';
+          : '<div class="screenshot-section"><div class="screenshot-label">Before</div><p>No screenshot available</p></div>';
 
-                const afterImg = result.afterPath
-                    ? `
+        const afterImg = result.afterPath
+          ? `
           <div class="screenshot-section">
             <div class="screenshot-label">After</div>
-            <img src="screenshots/${basename(
-                        result.afterPath
-                    )}" alt="After screenshot" class="screenshot-img">
+            <img src="screenshots/${basename(result.afterPath)}" alt="After screenshot" class="screenshot-img">
           </div>
         `
-                    : '<div class="screenshot-section"><div class="screenshot-label">After</div><p>No screenshot available</p></div>';
+          : '<div class="screenshot-section"><div class="screenshot-label">After</div><p>No screenshot available</p></div>';
 
-                return `
+        return `
           <div class="result-item">
             <div class="result-header">
-              <a href="${result.url}" class="url" target="_blank">${result.url
-                    }</a>
+              <a href="${result.url}" class="url" target="_blank">${result.url}</a>
               <div class="timestamp">${result.timestamp.toLocaleString()}</div>
             </div>
             <div class="screenshots">
@@ -497,22 +476,19 @@ export class HtmlGenerator {
             </div>
           </div>
         `;
-            } else {
-                const singleImg = result.singlePath
-                    ? `
+      } else {
+        const singleImg = result.singlePath
+          ? `
           <div class="screenshot-section">
-            <img src="screenshots/${basename(
-                        result.singlePath
-                    )}" alt="Screenshot" class="screenshot-img">
+            <img src="screenshots/${basename(result.singlePath)}" alt="Screenshot" class="screenshot-img">
           </div>
         `
-                    : '<div class="screenshot-section"><p>No screenshot available</p></div>';
+          : '<div class="screenshot-section"><p>No screenshot available</p></div>';
 
-                return `
+        return `
           <div class="result-item">
             <div class="result-header">
-              <a href="${result.url}" class="url" target="_blank">${result.url
-                    }</a>
+              <a href="${result.url}" class="url" target="_blank">${result.url}</a>
               <div class="timestamp">${result.timestamp.toLocaleString()}</div>
             </div>
             <div class="screenshots">
@@ -522,9 +498,9 @@ export class HtmlGenerator {
             </div>
           </div>
         `;
-            }
-        });
+      }
+    });
 
-        return resultItems.join('\n');
-    }
-} 
+    return resultItems.join('\n');
+  }
+}

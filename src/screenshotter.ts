@@ -21,7 +21,7 @@ export class Screenshotter {
   async takeScreenshots(
     urls: string[],
     options: ScreenshotOptions,
-    mode: 'before' | 'after' | 'single' = 'single'
+    mode: 'before' | 'after' | 'single' = 'single',
   ): Promise<ScreenshotResult[]> {
     if (!this.browser) {
       throw new Error('Browser not initialized');
@@ -40,11 +40,9 @@ export class Screenshotter {
       // Check if this is a staging/WordPress site for display purposes
       const isStaging = url.includes('staging.') || url.includes('dev.') || url.includes('test.');
       const isWordPress = url.includes('wp-') || url.includes('wordpress');
-      const stagingInfo = (isStaging || isWordPress) ? ' (60s timeout)' : '';
+      const stagingInfo = isStaging || isWordPress ? ' (60s timeout)' : '';
 
-      const spinner = ora(
-        `Taking screenshot ${i + 1}/${urls.length}: ${url}${stagingInfo}`
-      ).start();
+      const spinner = ora(`Taking screenshot ${i + 1}/${urls.length}: ${url}${stagingInfo}`).start();
 
       try {
         const result = await this.takeScreenshot(url, options, mode);
@@ -67,7 +65,7 @@ export class Screenshotter {
   private async takeScreenshot(
     url: string,
     options: ScreenshotOptions,
-    mode: 'before' | 'after' | 'single'
+    mode: 'before' | 'after' | 'single',
   ): Promise<ScreenshotResult> {
     if (!this.browser) {
       throw new Error('Browser not initialized');
@@ -90,7 +88,7 @@ export class Screenshotter {
           // Increase timeout for staging environments or WordPress sites
           const isStaging = url.includes('staging.') || url.includes('dev.') || url.includes('test.');
           const isWordPress = url.includes('wp-') || url.includes('wordpress');
-          const adjustedTimeout = (isStaging || isWordPress) ? Math.max(options.timeout, 60000) : options.timeout;
+          const adjustedTimeout = isStaging || isWordPress ? Math.max(options.timeout, 60000) : options.timeout;
 
           await page.goto(url, {
             waitUntil: options.waitStrategy || 'load',
@@ -101,14 +99,17 @@ export class Screenshotter {
           lastError = error instanceof Error ? error : new Error('Unknown error');
 
           // Check if it's a network-related error that we should retry
-          const isNetworkError = lastError.message.includes('net::ERR_NAME_NOT_RESOLVED') ||
+          const isNetworkError =
+            lastError.message.includes('net::ERR_NAME_NOT_RESOLVED') ||
             lastError.message.includes('net::ERR_CONNECTION_REFUSED') ||
             lastError.message.includes('net::ERR_TIMEOUT') ||
             lastError.message.includes('Timeout');
 
           if (isNetworkError && attempt < maxRetries) {
-            console.log(`  ⚠️  Network error on attempt ${attempt}/${maxRetries}, retrying in ${retryDelay / 1000}s...`);
-            await new Promise(resolve => setTimeout(resolve, retryDelay));
+            console.log(
+              `  ⚠️  Network error on attempt ${attempt}/${maxRetries}, retrying in ${retryDelay / 1000}s...`,
+            );
+            await new Promise((resolve) => setTimeout(resolve, retryDelay));
             continue;
           }
 
@@ -129,10 +130,7 @@ export class Screenshotter {
       if (mode === 'single') {
         screenshotPath = join(screenshotsDir, `${filename}.png`);
       } else {
-        screenshotPath = join(
-          screenshotsDir,
-          `${filename}_${mode}.png`
-        );
+        screenshotPath = join(screenshotsDir, `${filename}_${mode}.png`);
       }
 
       await page.screenshot({
@@ -165,4 +163,4 @@ export class Screenshotter {
       this.browser = null;
     }
   }
-} 
+}

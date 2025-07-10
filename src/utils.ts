@@ -52,4 +52,4 @@ export function formatDuration(ms: number): string {
     return `${minutes}m ${seconds % 60}s`;
   }
   return `${seconds}s`;
-} 
+}

@@ -3,5 +3,5 @@ module.exports = [
   'https://example.com',
   'https://httpbin.org/html',
   'https://jsonplaceholder.typicode.com/',
-  'https://github.com'
-]; 
+  'https://github.com',
+];

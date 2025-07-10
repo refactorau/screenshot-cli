@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { DataFile, ReportData, ScreenshotResult } from './types';
+import { DataFile, ReportData } from './types';
 
 export class DataPersistence {
   static async saveDataFile(
@@ -15,7 +15,7 @@ export class DataPersistence {
       retryDelay: number;
     },
     beforePhase?: { startTime: Date; endTime: Date; duration: string },
-    afterPhase?: { startTime: Date; endTime: Date; duration: string }
+    afterPhase?: { startTime: Date; endTime: Date; duration: string },
   ): Promise<void> {
     const dataFile: DataFile = {
       metadata: {
@@ -31,20 +31,24 @@ export class DataPersistence {
           height: options.height,
           timeout: options.timeout,
           maxRetries: options.maxRetries,
-          retryDelay: options.retryDelay
+          retryDelay: options.retryDelay,
         },
-        beforePhase: beforePhase ? {
-          startTime: beforePhase.startTime.toISOString(),
-          endTime: beforePhase.endTime.toISOString(),
-          duration: beforePhase.duration
-        } : undefined,
-        afterPhase: afterPhase ? {
-          startTime: afterPhase.startTime.toISOString(),
-          endTime: afterPhase.endTime.toISOString(),
-          duration: afterPhase.duration
-        } : undefined
+        beforePhase: beforePhase
+          ? {
+              startTime: beforePhase.startTime.toISOString(),
+              endTime: beforePhase.endTime.toISOString(),
+              duration: beforePhase.duration,
+            }
+          : undefined,
+        afterPhase: afterPhase
+          ? {
+              startTime: afterPhase.startTime.toISOString(),
+              endTime: afterPhase.endTime.toISOString(),
+              duration: afterPhase.duration,
+            }
+          : undefined,
       },
-      results: reportData.results.map(result => ({
+      results: reportData.results.map((result) => ({
         url: result.url,
         timestamp: result.singlePath ? result.timestamp.toISOString() : undefined,
         beforeTimestamp: result.beforePath ? result.timestamp.toISOString() : undefined,
@@ -55,8 +59,8 @@ export class DataPersistence {
         error: result.error,
         success: !result.error,
         beforeSuccess: result.beforePath ? !result.error : undefined,
-        afterSuccess: result.afterPath ? !result.error : undefined
-      }))
+        afterSuccess: result.afterPath ? !result.error : undefined,
+      })),
     };
 
     const jsonContent = this.generateJSONCContent(dataFile);
@@ -94,12 +98,12 @@ export class DataPersistence {
 
     return {
       ...dataFile,
-      results: dataFile.results.map(result => ({
+      results: dataFile.results.map((result) => ({
         ...result,
         singlePath: result.singlePath ? path.resolve(baseDir, result.singlePath) : undefined,
         beforePath: result.beforePath ? path.resolve(baseDir, result.beforePath) : undefined,
-        afterPath: result.afterPath ? path.resolve(baseDir, result.afterPath) : undefined
-      }))
+        afterPath: result.afterPath ? path.resolve(baseDir, result.afterPath) : undefined,
+      })),
     };
   }
 
@@ -115,7 +119,11 @@ export class DataPersistence {
   "metadata": {
     // Basic report information
     "version": "${dataFile.metadata.version}",           // Screenshot CLI version used
-    "mode": "${dataFile.metadata.mode}",${mode === 'single' ? '             // Screenshot mode: "single" or "before-after"' : '       // Screenshot mode: "single" or "before-after"'}
+    "mode": "${dataFile.metadata.mode}",${
+      mode === 'single'
+        ? '             // Screenshot mode: "single" or "before-after"'
+        : '       // Screenshot mode: "single" or "before-after"'
+    }
     "generatedAt": "${dataFile.metadata.generatedAt}",
     "totalUrls": ${dataFile.metadata.totalUrls},
     "successCount": ${dataFile.metadata.successCount},
@@ -162,8 +170,12 @@ export class DataPersistence {
       "url": "${result.url}",
       "timestamp": "${result.timestamp}",
       "singlePath": "${result.singlePath}",    // Relative path to screenshot
-      "success": ${result.success}${result.error ? `,
-      "error": "${result.error}"  // Error message if failed` : ''}
+      "success": ${result.success}${
+        result.error
+          ? `,
+      "error": "${result.error}"  // Error message if failed`
+          : ''
+      }
     }${isLast ? '' : ','}`;
       } else {
         content += `
@@ -175,9 +187,17 @@ export class DataPersistence {
       "afterPath": "${result.afterPath}",      // Relative path to after screenshot
       "beforeSuccess": ${result.beforeSuccess},
       "afterSuccess": ${result.afterSuccess},
-      "success": ${result.success}             // Overall success (both phases succeeded)${result.beforeError || result.afterError ? `,
-      ${result.beforeError ? `"beforeError": "${result.beforeError}"` : ''}${result.beforeError && result.afterError ? `,
-      ` : ''}${result.afterError ? `"afterError": "${result.afterError}"` : ''}  // Error messages if failed` : ''}
+      "success": ${result.success}             // Overall success (both phases succeeded)${
+        result.beforeError || result.afterError
+          ? `,
+      ${result.beforeError ? `"beforeError": "${result.beforeError}"` : ''}${
+        result.beforeError && result.afterError
+          ? `,
+      `
+          : ''
+      }${result.afterError ? `"afterError": "${result.afterError}"` : ''}  // Error messages if failed`
+          : ''
+      }
     }${isLast ? '' : ','}`;
       }
     });
@@ -232,10 +252,9 @@ export class DataPersistence {
         throw new Error(`Missing singlePath in successful result ${index}`);
       }
 
-      if (dataFile.metadata.mode === 'before-after' &&
-        (!result.beforePath && !result.afterPath) && result.success) {
+      if (dataFile.metadata.mode === 'before-after' && !result.beforePath && !result.afterPath && result.success) {
         throw new Error(`Missing beforePath or afterPath in successful result ${index}`);
       }
     });
   }
-} 
+}

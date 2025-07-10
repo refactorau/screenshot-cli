@@ -16,7 +16,7 @@ export interface ScreenshotOptions {
 export enum ReportType {
   HTML = 'html',
   PDF = 'pdf',
-  ALL = 'all'
+  ALL = 'all',
 }
 
 export interface ScreenshotResult {
@@ -91,9 +91,9 @@ export function titleToFilename(title: string): string {
   return title
     .toLowerCase()
     .replace(/[^a-z0-9\s-]/g, '') // Remove special characters except spaces and hyphens
-    .replace(/\s+/g, '-')         // Replace spaces with hyphens
-    .replace(/-+/g, '-')          // Replace multiple hyphens with single hyphen
-    .replace(/^-|-$/g, '');       // Remove leading/trailing hyphens
+    .replace(/\s+/g, '-') // Replace spaces with hyphens
+    .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
+    .replace(/^-|-$/g, ''); // Remove leading/trailing hyphens
 }
 
 export function generateFilenames(title: string, outputDir: string) {
@@ -102,6 +102,6 @@ export function generateFilenames(title: string, outputDir: string) {
     dataFile: `${outputDir}/${safeTitle}-data.jsonc`,
     htmlFile: `${outputDir}/${safeTitle}.html`,
     pdfFile: `${outputDir}/${safeTitle}.pdf`,
-    safeTitle
+    safeTitle,
   };
 }

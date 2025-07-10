@@ -119,11 +119,7 @@ https://github.com
 #### JavaScript File (`urls.js`)
 
 ```javascript
-module.exports = [
-  'https://example.com',
-  'https://google.com',
-  'https://github.com',
-];
+module.exports = ['https://example.com', 'https://google.com', 'https://github.com'];
 ```
 
 ## Output
@@ -220,6 +216,37 @@ pnpm dev capture --help
 pnpm dev generate --help
 ```
 
+### Code Formatting
+
+This project uses [Prettier](https://prettier.io/) for consistent code formatting:
+
+```bash
+# Format all files
+pnpm format
+
+# Check formatting (useful for CI)
+pnpm format --check
+```
+
+**Prettier Configuration:**
+
+- **Tab Width**: 2 spaces
+- **Quotes**: Single quotes preferred
+- **Print Width**: 120 characters
+- **Semicolons**: Always required
+- **Trailing Commas**: All where valid
+- **Line Endings**: LF (Unix-style)
+
+**VS Code Setup:**
+
+If you're using VS Code, the project includes recommended settings that will:
+
+- Automatically format code on save
+- Suggest installing the Prettier extension
+- Organize imports and fix linting issues automatically
+
+Simply open the project in VS Code and accept the extension recommendations for the best development experience.
+
 ## Data Persistence
 
 The tool saves all screenshot data and metadata to `.jsonc` files, allowing you to:
@@ -262,10 +289,31 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 When contributing:
 
-- Follow the existing code style and patterns
-- Write clear commit messages using [Conventional Commits](https://www.conventionalcommits.org/)
-- Ensure all tests pass and functionality works as expected
-- Update documentation if needed
+- **Code Style**: Run `pnpm format` before committing to ensure consistent formatting
+- **Commit Messages**: Use [Conventional Commits](https://www.conventionalcommits.org/) specification
+- **Testing**: Ensure all functionality works as expected
+- **Documentation**: Update README and comments for significant changes
+- **TypeScript**: Maintain strict type checking and proper interfaces
+
+### Development Workflow
+
+```bash
+# 1. Install dependencies
+pnpm install
+
+# 2. Make your changes
+# ... edit files ...
+
+# 3. Format code
+pnpm format
+
+# 4. Build and test
+pnpm build
+pnpm capture --help  # Test CLI works
+
+# 5. Commit with conventional format
+git commit -m "feat: add new feature description"
+```
 
 ## Support
 
