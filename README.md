@@ -261,24 +261,6 @@ pnpm capture --file urls.txt --wait-strategy networkidle
 pnpm capture --file urls.txt --wait-strategy domcontentloaded
 ```
 
-## Project Structure
-
-```
-screenshot-cli/
-├── src/
-│   ├── index.ts             # Main CLI entry point
-│   ├── screenshotter.ts     # Screenshot capture logic
-│   ├── html-generator.ts    # HTML report generation
-│   ├── pdf-generator.ts     # PDF report generation
-│   ├── data-persistence.ts  # Data file management
-│   ├── types.ts             # TypeScript type definitions
-│   └── utils.ts             # Utility functions
-├── bin/
-│   └── screenshot-cli.js    # Executable script
-├── dist/                    # Built JavaScript files
-└── output/                  # Generated screenshots and reports
-```
-
 ## Development
 
 ```bash
