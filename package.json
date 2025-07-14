@@ -1,6 +1,6 @@
 {
   "name": "screenshot-cli",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "CLI tool for taking website screenshots with before/after comparison and HTML/PDF report generation",
   "keywords": [
     "screenshot",
@@ -27,6 +27,7 @@
     "build": "tsc",
     "dev": "ts-node src/index.ts",
     "capture": "node dist/index.js capture",
+    "compare": "node dist/index.js compare",
     "generate": "node dist/index.js generate",
     "clean": "rm -rf dist",
     "format": "prettier --write \"**/*.{js,ts,json,md}\""
@@ -43,12 +44,15 @@
     "inquirer": "^9.2.0",
     "ora": "^7.0.1",
     "pdfkit": "^0.17.1",
-    "playwright": "^1.40.0"
+    "pixelmatch": "^7.1.0",
+    "playwright": "^1.40.0",
+    "pngjs": "^7.0.0"
   },
   "devDependencies": {
     "@types/inquirer": "^9.0.0",
     "@types/node": "^20.0.0",
     "@types/pdfkit": "^0.14.0",
+    "@types/pngjs": "^6.0.5",
     "prettier": "^3.6.2",
     "ts-node": "^10.9.0",
     "typescript": "^5.0.0"

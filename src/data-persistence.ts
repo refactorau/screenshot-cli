@@ -35,17 +35,17 @@ export class DataPersistence {
         },
         beforePhase: beforePhase
           ? {
-              startTime: beforePhase.startTime.toISOString(),
-              endTime: beforePhase.endTime.toISOString(),
-              duration: beforePhase.duration,
-            }
+            startTime: beforePhase.startTime.toISOString(),
+            endTime: beforePhase.endTime.toISOString(),
+            duration: beforePhase.duration,
+          }
           : undefined,
         afterPhase: afterPhase
           ? {
-              startTime: afterPhase.startTime.toISOString(),
-              endTime: afterPhase.endTime.toISOString(),
-              duration: afterPhase.duration,
-            }
+            startTime: afterPhase.startTime.toISOString(),
+            endTime: afterPhase.endTime.toISOString(),
+            duration: afterPhase.duration,
+          }
           : undefined,
       },
       results: reportData.results.map((result) => ({
@@ -60,6 +60,10 @@ export class DataPersistence {
         success: !result.error,
         beforeSuccess: result.beforePath ? !result.error : undefined,
         afterSuccess: result.afterPath ? !result.error : undefined,
+        comparison: result.comparison ? {
+          ...result.comparison,
+          diffImagePath: result.comparison.diffImagePath ? path.relative(path.dirname(dataFilePath), result.comparison.diffImagePath) : undefined
+        } : undefined,
       })),
     };
 
@@ -103,6 +107,10 @@ export class DataPersistence {
         singlePath: result.singlePath ? path.resolve(baseDir, result.singlePath) : undefined,
         beforePath: result.beforePath ? path.resolve(baseDir, result.beforePath) : undefined,
         afterPath: result.afterPath ? path.resolve(baseDir, result.afterPath) : undefined,
+        comparison: result.comparison ? {
+          ...result.comparison,
+          diffImagePath: result.comparison.diffImagePath ? path.resolve(baseDir, result.comparison.diffImagePath) : undefined
+        } : undefined,
       })),
     };
   }
@@ -119,11 +127,10 @@ export class DataPersistence {
   "metadata": {
     // Basic report information
     "version": "${dataFile.metadata.version}",           // Screenshot CLI version used
-    "mode": "${dataFile.metadata.mode}",${
-      mode === 'single'
+    "mode": "${dataFile.metadata.mode}",${mode === 'single'
         ? '             // Screenshot mode: "single" or "before-after"'
         : '       // Screenshot mode: "single" or "before-after"'
-    }
+      }
     "generatedAt": "${dataFile.metadata.generatedAt}",
     "totalUrls": ${dataFile.metadata.totalUrls},
     "successCount": ${dataFile.metadata.successCount},
@@ -170,12 +177,11 @@ export class DataPersistence {
       "url": "${result.url}",
       "timestamp": "${result.timestamp}",
       "singlePath": "${result.singlePath}",    // Relative path to screenshot
-      "success": ${result.success}${
-        result.error
-          ? `,
+      "success": ${result.success}${result.error
+            ? `,
       "error": "${result.error}"  // Error message if failed`
-          : ''
-      }
+            : ''
+          }
     }${isLast ? '' : ','}`;
       } else {
         content += `
@@ -187,17 +193,23 @@ export class DataPersistence {
       "afterPath": "${result.afterPath}",      // Relative path to after screenshot
       "beforeSuccess": ${result.beforeSuccess},
       "afterSuccess": ${result.afterSuccess},
-      "success": ${result.success}             // Overall success (both phases succeeded)${
-        result.beforeError || result.afterError
-          ? `,
-      ${result.beforeError ? `"beforeError": "${result.beforeError}"` : ''}${
-        result.beforeError && result.afterError
-          ? `,
+      "success": ${result.success}${result.beforeError || result.afterError || result.comparison ? ',' : ''}             // Overall success (both phases succeeded)${result.beforeError || result.afterError
+            ? `
+      ${result.beforeError ? `"beforeError": "${result.beforeError}"` : ''}${result.beforeError && result.afterError
+              ? `,
       `
-          : ''
-      }${result.afterError ? `"afterError": "${result.afterError}"` : ''}  // Error messages if failed`
-          : ''
-      }
+              : ''
+            }${result.afterError ? `"afterError": "${result.afterError}"` : ''}${result.comparison ? ',' : ''}  // Error messages if failed`
+            : ''
+          }${result.comparison ? `
+      "comparison": {
+        "diffPixels": ${result.comparison.diffPixels},
+        "totalPixels": ${result.comparison.totalPixels},
+        "diffPercentage": ${result.comparison.diffPercentage},
+        "changeLevel": "${result.comparison.changeLevel}",
+        "hasSignificantChange": ${result.comparison.hasSignificantChange}${result.comparison.diffImagePath ? `,
+        "diffImagePath": "${result.comparison.diffImagePath}"  // Relative path to diff image` : ''}
+      }` : ''}
     }${isLast ? '' : ','}`;
       }
     });

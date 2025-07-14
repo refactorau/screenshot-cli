@@ -5,7 +5,7 @@ A TypeScript CLI tool that takes screenshots of web pages and generates styled H
 ## Features
 
 - 📸 Take full-page screenshots of websites
-- 🔄 Before/after comparison mode
+- 🔄 Before/after comparison mode with real-time image analysis
 - 📊 Beautiful HTML and PDF reports with dark theme
 - 📁 Multiple input methods (URLs, text files, JS files)
 - 🎨 Responsive design with modern UI
@@ -16,6 +16,7 @@ A TypeScript CLI tool that takes screenshots of web pages and generates styled H
 - 🚀 Intelligent wait strategies for different site types
 - 🕐 Automatic timeout adjustment for staging/WordPress sites
 - 💾 Data persistence with `.jsonc` files for report regeneration
+- 🔍 Image comparison performed during capture with persistent storage
 - 🔄 Separate report generation from existing data files
 
 ## Installation
@@ -35,17 +36,25 @@ pnpm build
 
 ## Usage
 
-The CLI has two main commands: `capture` for taking screenshots and `generate` for creating reports from existing data.
+The CLI has three main commands: `capture` for taking screenshots, `compare` for adding comparison data to existing before/after data files, and `generate` for creating reports from existing data.
 
 **For regular usage** (after building), use:
 
 - `pnpm capture` - Take screenshots
+- `pnpm compare` - Add comparison data to existing before/after data files
 - `pnpm generate` - Generate reports from existing data
 
 **For development** (when working on the tool), use:
 
 - `pnpm dev capture` - Run capture in development mode
+- `pnpm dev compare` - Run compare in development mode
 - `pnpm dev generate` - Run generate in development mode
+
+### Command Overview
+
+- **`capture`** - Takes screenshots and optionally performs image comparison (if `--before-after` is used)
+- **`compare`** - Adds or updates image comparison data in existing before/after data files
+- **`generate`** - Creates HTML/PDF reports from data files (uses existing comparison data, no image processing)
 
 ### Screenshot Capture
 
@@ -70,7 +79,30 @@ pnpm capture --file urls.txt --before-after
 # 1. Take "before" screenshots
 # 2. Ask you to confirm when ready for "after" screenshots
 # 3. Take "after" screenshots
-# 4. Generate comparison report
+# 4. Perform real-time image comparison analysis
+# 5. Store comparison data (diff %, change level, diff images) in .jsonc file
+# 6. Generate comparison report
+
+# You'll see comparison progress during capture:
+# ✅ Image comparison complete: 3 changed, 7 unchanged
+```
+
+### Compare Mode
+
+The `compare` command adds image comparison data to existing before/after data files:
+
+```bash
+# Add comparison data to existing data file (if not done during capture)
+pnpm compare report-data.jsonc
+
+# Customize comparison sensitivity
+pnpm compare --comparison-threshold 0.05 --min-change-threshold 1.0 report-data.jsonc
+
+# Skip generating diff images to save space
+pnpm compare --skip-diff-images report-data.jsonc
+
+# Update comparison data with different settings
+pnpm compare --ignore-antialiasing report-data.jsonc
 ```
 
 ### Report Generation
@@ -86,6 +118,29 @@ pnpm generate --report-type pdf report-data.jsonc
 pnpm generate --report-type all report-data.jsonc
 ```
 
+### Comparison Data Storage
+
+When using before/after mode, image comparison data is automatically calculated during capture and stored in the `.jsonc` data file:
+
+```json
+{
+  "comparison": {
+    "diffPixels": 192764,
+    "totalPixels": 21897600,
+    "diffPercentage": 0.88,
+    "changeLevel": "minimal",
+    "hasSignificantChange": true,
+    "diffImagePath": "screenshots/example.com_before_diff.png"
+  }
+}
+```
+
+This enables:
+
+- **Consistent reports**: Same comparison data across multiple report generations
+- **Faster report generation**: No need to re-calculate image differences
+- **Data persistence**: Comparison results are preserved for future analysis
+
 ### Capture Options
 
 - `-u, --urls <urls>` - Comma-separated list of URLs
@@ -100,10 +155,31 @@ pnpm generate --report-type all report-data.jsonc
 - `--wait-strategy <strategy>` - Page load wait strategy: networkidle, load, domcontentloaded (default: load)
 - `--report-type <type>` - Report type: html, pdf, all (default: html)
 - `--title <title>` - Report title (used for filenames) (default: Report)
+- `--comparison-threshold <threshold>` - Pixelmatch threshold for comparison (0-1) (default: 0.1)
+- `--min-change-threshold <threshold>` - Minimum change percentage to highlight (0-100) (default: 0.5)
+- `--skip-diff-images` - Skip generating diff images for unchanged pages
+- `--comparison-only` - Only show pages with changes in reports (requires --before-after)
 
 ### Generate Options
 
 - `--report-type <type>` - Report type: html, pdf, all (default: html)
+
+### Compare Options
+
+The `compare` command adds or updates image comparison data in existing before/after data files:
+
+```bash
+# Add comparison data to existing data file
+pnpm compare report-data.jsonc
+
+# Customize comparison settings
+pnpm compare --comparison-threshold 0.05 --min-change-threshold 1.0 report-data.jsonc
+```
+
+- `--comparison-threshold <threshold>` - Pixelmatch threshold for comparison (0-1) (default: 0.1)
+- `--min-change-threshold <threshold>` - Minimum change percentage to highlight (0-100) (default: 0.5)
+- `--skip-diff-images` - Skip generating diff images for unchanged pages
+- `--ignore-antialiasing` - Ignore anti-aliased pixels in comparison
 
 ### Input File Formats
 
@@ -281,6 +357,7 @@ This project follows [Semantic Versioning (SemVer)](https://semver.org/) guideli
 
 ### Version History
 
+- **v1.1.0** - Added real-time image comparison, persistent comparison data storage, dedicated `compare` command, enhanced reports with comparison badges and statistics, change level classification, and improved PDF reports with comparison view
 - **v1.0.0** - Initial stable release with full feature set
 
 ## Contributing

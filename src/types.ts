@@ -19,6 +19,31 @@ export enum ReportType {
   ALL = 'all',
 }
 
+export interface ComparisonResult {
+  diffPixels: number;
+  totalPixels: number;
+  diffPercentage: number;
+  changeLevel: ChangeLevel;
+  diffImagePath?: string;
+  hasSignificantChange: boolean;
+}
+
+export enum ChangeLevel {
+  NONE = 'none',           // 0-0.1% difference
+  MINIMAL = 'minimal',     // 0.1-1% difference  
+  MINOR = 'minor',         // 1-5% difference
+  MODERATE = 'moderate',   // 5-15% difference
+  MAJOR = 'major',         // 15-50% difference
+  EXTREME = 'extreme'      // 50%+ difference
+}
+
+export interface ComparisonOptions {
+  threshold: number;          // pixelmatch threshold (0-1)
+  generateDiffImage: boolean; // create visual diff image
+  ignoreAntialiasing: boolean; // ignore anti-aliased pixels
+  minChangeThreshold: number; // minimum % to consider "changed"
+}
+
 export interface ScreenshotResult {
   url: string;
   beforePath?: string;
@@ -26,6 +51,7 @@ export interface ScreenshotResult {
   singlePath?: string;
   error?: string;
   timestamp: Date;
+  comparison?: ComparisonResult;
 }
 
 export interface ReportData {
@@ -78,6 +104,7 @@ export interface DataFile {
     success: boolean;
     beforeSuccess?: boolean;
     afterSuccess?: boolean;
+    comparison?: ComparisonResult;
   }>;
 }
 

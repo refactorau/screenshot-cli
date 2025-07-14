@@ -23,9 +23,15 @@ importers:
       pdfkit:
         specifier: ^0.17.1
         version: 0.17.1
+      pixelmatch:
+        specifier: ^7.1.0
+        version: 7.1.0
       playwright:
         specifier: ^1.40.0
         version: 1.53.2
+      pngjs:
+        specifier: ^7.0.0
+        version: 7.0.0
     devDependencies:
       '@types/inquirer':
         specifier: ^9.0.0
@@ -36,6 +42,9 @@ importers:
       '@types/pdfkit':
         specifier: ^0.14.0
         version: 0.14.0
+      '@types/pngjs':
+        specifier: ^6.0.5
+        version: 6.0.5
       prettier:
         specifier: ^3.6.2
         version: 3.6.2
@@ -89,6 +98,9 @@ packages:
 
   '@types/pdfkit@0.14.0':
     resolution: {integrity: sha512-X94hoZVr9dNfV23roeXRm57AWS+AOMak3gq2wZvn4TXiLvXE8+TrYaM5IkMyZbGRw49jEqI49rP/UVL3+C3Svg==}
+
+  '@types/pngjs@6.0.5':
+    resolution: {integrity: sha512-0k5eKfrA83JOZPppLtS2C7OUtyNAl2wKNxfyYl9Q5g9lPkgBl/9hNyAu6HuEH2J4XmIv2znEpkDd0SaZVxW6iQ==}
 
   '@types/through@0.0.33':
     resolution: {integrity: sha512-HsJ+z3QuETzP3cswwtzt2vEIiHBk/dCcHGhbmG5X3ecnwFD/lPrMpliGXxSCg03L9AhrdwA4Oz/qfspkDW+xGQ==}
@@ -314,6 +326,10 @@ packages:
   pdfkit@0.17.1:
     resolution: {integrity: sha512-Kkf1I9no14O/uo593DYph5u3QwiMfby7JsBSErN1WqeyTgCBNJE3K4pXBn3TgkdKUIVu+buSl4bYUNC+8Up4xg==}
 
+  pixelmatch@7.1.0:
+    resolution: {integrity: sha512-1wrVzJ2STrpmONHKBy228LM1b84msXDUoAzVEl0R8Mz4Ce6EPr+IVtxm8+yvrqLYMHswREkjYFaMxnyGnaY3Ng==}
+    hasBin: true
+
   playwright-core@1.53.2:
     resolution: {integrity: sha512-ox/OytMy+2w1jcYEYlOo1Hhp8hZkLCximMTUTMBXjGUA1KoFfiSZ+DU+3a739jsPY0yoKH2TFy9S2fsJas8yAw==}
     engines: {node: '>=18'}
@@ -326,6 +342,10 @@ packages:
 
   png-js@1.0.0:
     resolution: {integrity: sha512-k+YsbhpA9e+EFfKjTCH3VW6aoKlyNYI6NYdTfDL4CIvFnvsuO84ttonmZE7rc+v23SLTH8XX+5w/Ak9v0xGY4g==}
+
+  pngjs@7.0.0:
+    resolution: {integrity: sha512-LKWqWJRhstyYo9pGvgor/ivk2w94eSjE3RGVuzLGlr3NmD8bf7RcYGze1mNdEHRP6TRP6rMuDHk5t44hnTRyow==}
+    engines: {node: '>=14.19.0'}
 
   prettier@3.6.2:
     resolution: {integrity: sha512-I7AIg5boAr5R0FFtJ6rCfD+LFsWHp81dolrFD8S79U9tb8Az2nGrJncnMSnys+bpQJfRUzqs9hnA81OAA3hCuQ==}
@@ -492,6 +512,10 @@ snapshots:
       undici-types: 6.21.0
 
   '@types/pdfkit@0.14.0':
+    dependencies:
+      '@types/node': 20.19.4
+
+  '@types/pngjs@6.0.5':
     dependencies:
       '@types/node': 20.19.4
 
@@ -721,6 +745,10 @@ snapshots:
       linebreak: 1.1.0
       png-js: 1.0.0
 
+  pixelmatch@7.1.0:
+    dependencies:
+      pngjs: 7.0.0
+
   playwright-core@1.53.2: {}
 
   playwright@1.53.2:
@@ -730,6 +758,8 @@ snapshots:
       fsevents: 2.3.2
 
   png-js@1.0.0: {}
+
+  pngjs@7.0.0: {}
 
   prettier@3.6.2: {}
 
