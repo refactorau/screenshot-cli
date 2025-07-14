@@ -9,13 +9,13 @@ export class ImageComparator {
     threshold: 0.1,
     generateDiffImage: true,
     ignoreAntialiasing: false,
-    minChangeThreshold: 0.1 // 0.1% minimum change to be considered different
+    minChangeThreshold: 0.1, // 0.1% minimum change to be considered different
   };
 
   async compareImages(
     beforePath: string,
     afterPath: string,
-    options: Partial<ComparisonOptions> = {}
+    options: Partial<ComparisonOptions> = {},
   ): Promise<ComparisonResult> {
     const opts = { ...this.defaultOptions, ...options };
 
@@ -44,7 +44,7 @@ export class ImageComparator {
           diffPercentage: Math.round(diffPercentage * 100) / 100,
           changeLevel,
           diffImagePath: undefined, // Can't generate diff for different dimensions
-          hasSignificantChange: true // Always significant when dimensions change
+          hasSignificantChange: true, // Always significant when dimensions change
         };
       }
 
@@ -55,21 +55,14 @@ export class ImageComparator {
       const diffImg = opts.generateDiffImage ? new PNG({ width, height }) : null;
 
       // Compare images
-      const diffPixels = pixelmatch(
-        beforeImg.data,
-        afterImg.data,
-        diffImg?.data || undefined,
-        width,
-        height,
-        {
-          threshold: opts.threshold,
-          includeAA: !opts.ignoreAntialiasing,
-          alpha: 0.1,
-          diffColor: [255, 0, 0],      // Red for differences
-          diffColorAlt: [0, 255, 0],   // Green for removals
-          aaColor: [255, 255, 0]       // Yellow for antialiasing
-        }
-      );
+      const diffPixels = pixelmatch(beforeImg.data, afterImg.data, diffImg?.data || undefined, width, height, {
+        threshold: opts.threshold,
+        includeAA: !opts.ignoreAntialiasing,
+        alpha: 0.1,
+        diffColor: [255, 0, 0], // Red for differences
+        diffColorAlt: [0, 255, 0], // Green for removals
+        aaColor: [255, 255, 0], // Yellow for antialiasing
+      });
 
       const diffPercentage = (diffPixels / totalPixels) * 100;
       const changeLevel = this.determineChangeLevel(diffPercentage);
@@ -78,11 +71,10 @@ export class ImageComparator {
       let diffImagePath: string | undefined;
 
       // Save diff image if significant changes found OR if it's a major change
-      const shouldGenerateDiffImage = opts.generateDiffImage && diffImg && (
-        hasSignificantChange ||
-        changeLevel === 'major' ||
-        changeLevel === 'moderate'
-      );
+      const shouldGenerateDiffImage =
+        opts.generateDiffImage &&
+        diffImg &&
+        (hasSignificantChange || changeLevel === 'major' || changeLevel === 'moderate');
 
       if (shouldGenerateDiffImage) {
         diffImagePath = this.generateDiffImagePath(beforePath);
@@ -96,9 +88,8 @@ export class ImageComparator {
         diffPercentage: Math.round(diffPercentage * 100) / 100, // Round to 2 decimals
         changeLevel,
         diffImagePath,
-        hasSignificantChange
+        hasSignificantChange,
       };
-
     } catch (error) {
       throw new Error(`Image comparison failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
@@ -124,7 +115,7 @@ export class ImageComparator {
    */
   async batchCompare(
     imagePairs: Array<{ beforePath: string; afterPath: string }>,
-    options: Partial<ComparisonOptions> = {}
+    options: Partial<ComparisonOptions> = {},
   ): Promise<ComparisonResult[]> {
     const results: ComparisonResult[] = [];
 
@@ -140,7 +131,7 @@ export class ImageComparator {
           diffPercentage: 0,
           changeLevel: ChangeLevel.NONE,
           hasSignificantChange: false,
-          diffImagePath: undefined
+          diffImagePath: undefined,
         });
       }
     }
@@ -159,10 +150,10 @@ export class ImageComparator {
     maxChangePercentage: number;
     changeLevelCounts: Record<ChangeLevel, number>;
   } {
-    const changedImages = results.filter(r => r.hasSignificantChange).length;
+    const changedImages = results.filter((r) => r.hasSignificantChange).length;
     const unchangedImages = results.length - changedImages;
 
-    const changePercentages = results.map(r => r.diffPercentage);
+    const changePercentages = results.map((r) => r.diffPercentage);
     const averageChangePercentage = changePercentages.reduce((a, b) => a + b, 0) / results.length;
     const maxChangePercentage = Math.max(...changePercentages);
 
@@ -172,10 +163,10 @@ export class ImageComparator {
       [ChangeLevel.MINOR]: 0,
       [ChangeLevel.MODERATE]: 0,
       [ChangeLevel.MAJOR]: 0,
-      [ChangeLevel.EXTREME]: 0
+      [ChangeLevel.EXTREME]: 0,
     };
 
-    results.forEach(result => {
+    results.forEach((result) => {
       changeLevelCounts[result.changeLevel]++;
     });
 
@@ -185,7 +176,7 @@ export class ImageComparator {
       unchangedImages,
       averageChangePercentage: Math.round(averageChangePercentage * 100) / 100,
       maxChangePercentage,
-      changeLevelCounts
+      changeLevelCounts,
     };
   }
-} 
+}

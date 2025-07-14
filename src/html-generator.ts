@@ -3,27 +3,31 @@ import { basename, join } from 'path';
 import { ChangeLevel, ComparisonOptions, ReportData, ScreenshotResult } from './types';
 
 export class HtmlGenerator {
-    async generateReport(data: ReportData, outputPath: string, comparisonOptions?: Partial<ComparisonOptions & { comparisonOnly: boolean }>): Promise<string> {
-        // Filter results if comparison-only is enabled (this can still be useful for report filtering)
-        if (comparisonOptions?.comparisonOnly && data.mode === 'before-after') {
-            data.results = data.results.filter(result => result.comparison?.hasSignificantChange);
-        }
-
-        const template = await this.getTemplate();
-
-        // Determine if outputPath is a full file path or a directory
-        const isFilePath = outputPath.endsWith('.html');
-        const reportPath = isFilePath ? outputPath : join(outputPath, 'report.html');
-        const baseDir = isFilePath ? outputPath.replace(/[^/\\]*\.html$/, '') : outputPath;
-
-        const html = await this.populateTemplate(template, data, baseDir);
-        await fs.writeFile(reportPath, html, 'utf-8');
-
-        return reportPath;
+  async generateReport(
+    data: ReportData,
+    outputPath: string,
+    comparisonOptions?: Partial<ComparisonOptions & { comparisonOnly: boolean }>,
+  ): Promise<string> {
+    // Filter results if comparison-only is enabled (this can still be useful for report filtering)
+    if (comparisonOptions?.comparisonOnly && data.mode === 'before-after') {
+      data.results = data.results.filter((result) => result.comparison?.hasSignificantChange);
     }
 
-    private async getTemplate(): Promise<string> {
-        return `<!DOCTYPE html>
+    const template = await this.getTemplate();
+
+    // Determine if outputPath is a full file path or a directory
+    const isFilePath = outputPath.endsWith('.html');
+    const reportPath = isFilePath ? outputPath : join(outputPath, 'report.html');
+    const baseDir = isFilePath ? outputPath.replace(/[^/\\]*\.html$/, '') : outputPath;
+
+    const html = await this.populateTemplate(template, data, baseDir);
+    await fs.writeFile(reportPath, html, 'utf-8');
+
+    return reportPath;
+  }
+
+  private async getTemplate(): Promise<string> {
+    return `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -479,44 +483,44 @@ export class HtmlGenerator {
     </script>
 </body>
 </html>`;
+  }
+
+  private async populateTemplate(template: string, data: ReportData, outputPath: string): Promise<string> {
+    let html = template;
+
+    // Replace basic placeholders
+    html = html.replace('{{generatedAt}}', data.generatedAt.toLocaleString());
+    html = html.replace('{{totalUrls}}', data.totalUrls.toString());
+    html = html.replace('{{successCount}}', data.successCount.toString());
+    html = html.replace('{{errorCount}}', data.errorCount.toString());
+    html = html.replace('{{mode}}', data.mode === 'before-after' ? 'Before/After' : 'Single');
+
+    // Add comparison statistics for before/after mode
+    const comparisonStats = this.generateComparisonStatsHtml(data);
+    html = html.replace('{{comparisonStats}}', comparisonStats);
+
+    // Generate results HTML
+    const resultsHtml = await this.generateResultsHtml(data.results, data.mode, outputPath);
+    html = html.replace('{{results}}', resultsHtml);
+
+    return html;
+  }
+
+  private generateComparisonStatsHtml(data: ReportData): string {
+    if (data.mode !== 'before-after') {
+      return '';
     }
 
-    private async populateTemplate(template: string, data: ReportData, outputPath: string): Promise<string> {
-        let html = template;
+    // Calculate comparison summary from stored comparison data
+    const changedCount = data.results.filter((r) => r.comparison?.hasSignificantChange).length;
+    const unchangedCount = data.results.filter((r) => r.comparison && !r.comparison.hasSignificantChange).length;
+    const totalComparisons = changedCount + unchangedCount;
 
-        // Replace basic placeholders
-        html = html.replace('{{generatedAt}}', data.generatedAt.toLocaleString());
-        html = html.replace('{{totalUrls}}', data.totalUrls.toString());
-        html = html.replace('{{successCount}}', data.successCount.toString());
-        html = html.replace('{{errorCount}}', data.errorCount.toString());
-        html = html.replace('{{mode}}', data.mode === 'before-after' ? 'Before/After' : 'Single');
-
-        // Add comparison statistics for before/after mode
-        const comparisonStats = this.generateComparisonStatsHtml(data);
-        html = html.replace('{{comparisonStats}}', comparisonStats);
-
-        // Generate results HTML
-        const resultsHtml = await this.generateResultsHtml(data.results, data.mode, outputPath);
-        html = html.replace('{{results}}', resultsHtml);
-
-        return html;
+    if (totalComparisons === 0) {
+      return '';
     }
 
-    private generateComparisonStatsHtml(data: ReportData): string {
-        if (data.mode !== 'before-after') {
-            return '';
-        }
-
-        // Calculate comparison summary from stored comparison data
-        const changedCount = data.results.filter(r => r.comparison?.hasSignificantChange).length;
-        const unchangedCount = data.results.filter(r => r.comparison && !r.comparison.hasSignificantChange).length;
-        const totalComparisons = changedCount + unchangedCount;
-
-        if (totalComparisons === 0) {
-            return '';
-        }
-
-        return `
+    return `
             <div class="comparison-stats">
                 <div class="comparison-stat">
                     <div class="comparison-stat-number changed-count">${changedCount}</div>
@@ -532,15 +536,15 @@ export class HtmlGenerator {
                 </div>
             </div>
         `;
-    }
+  }
 
-    private async generateResultsHtml(results: ScreenshotResult[], mode: string, outputPath: string): Promise<string> {
-        // Sort results by change level for before/after mode
-        const sortedResults = mode === 'before-after' ? this.sortResultsByChangeLevel(results) : results;
+  private async generateResultsHtml(results: ScreenshotResult[], mode: string, outputPath: string): Promise<string> {
+    // Sort results by change level for before/after mode
+    const sortedResults = mode === 'before-after' ? this.sortResultsByChangeLevel(results) : results;
 
-        const resultItems = sortedResults.map((result) => {
-            if (result.error) {
-                return `
+    const resultItems = sortedResults.map((result) => {
+      if (result.error) {
+        return `
           <div class="result-item">
             <div class="result-header">
               <a href="${result.url}" class="url" target="_blank">${result.url}</a>
@@ -551,44 +555,44 @@ export class HtmlGenerator {
             </div>
           </div>
         `;
-            }
+      }
 
-            if (mode === 'before-after') {
-                const hasChanges = result.comparison?.hasSignificantChange || false;
-                const changeClass = hasChanges ? 'has-changes' : 'no-changes';
+      if (mode === 'before-after') {
+        const hasChanges = result.comparison?.hasSignificantChange || false;
+        const changeClass = hasChanges ? 'has-changes' : 'no-changes';
 
-                const comparisonBadge = result.comparison ? this.generateComparisonBadge(result.comparison) : '';
+        const comparisonBadge = result.comparison ? this.generateComparisonBadge(result.comparison) : '';
 
-                const beforeImg = result.beforePath
-                    ? `
+        const beforeImg = result.beforePath
+          ? `
           <div class="screenshot-section">
             <div class="screenshot-label">Before</div>
             <img src="screenshots/${basename(result.beforePath)}" alt="Before screenshot" class="screenshot-img">
           </div>
         `
-                    : '<div class="screenshot-section"><div class="screenshot-label">Before</div><p>No screenshot available</p></div>';
+          : '<div class="screenshot-section"><div class="screenshot-label">Before</div><p>No screenshot available</p></div>';
 
-                const afterImg = result.afterPath
-                    ? `
+        const afterImg = result.afterPath
+          ? `
           <div class="screenshot-section">
             <div class="screenshot-label">After</div>
             <img src="screenshots/${basename(result.afterPath)}" alt="After screenshot" class="screenshot-img">
           </div>
         `
-                    : '<div class="screenshot-section"><div class="screenshot-label">After</div><p>No screenshot available</p></div>';
+          : '<div class="screenshot-section"><div class="screenshot-label">After</div><p>No screenshot available</p></div>';
 
-                const diffImg = result.comparison?.diffImagePath
-                    ? `
+        const diffImg = result.comparison?.diffImagePath
+          ? `
           <div class="screenshot-section">
             <div class="screenshot-label">Differences</div>
             <img src="screenshots/${basename(result.comparison.diffImagePath)}" alt="Difference visualization" class="screenshot-img diff-image">
           </div>
         `
-                    : '';
+          : '';
 
-                const containerClass = diffImg ? 'before-after-diff' : 'before-after';
+        const containerClass = diffImg ? 'before-after-diff' : 'before-after';
 
-                return `
+        return `
           <div class="result-item ${changeClass}">
             <div class="result-header">
               <a href="${result.url}" class="url" target="_blank">${result.url}</a>
@@ -604,16 +608,16 @@ export class HtmlGenerator {
             </div>
           </div>
         `;
-            } else {
-                const singleImg = result.singlePath
-                    ? `
+      } else {
+        const singleImg = result.singlePath
+          ? `
           <div class="screenshot-section">
             <img src="screenshots/${basename(result.singlePath)}" alt="Screenshot" class="screenshot-img">
           </div>
         `
-                    : '<div class="screenshot-section"><p>No screenshot available</p></div>';
+          : '<div class="screenshot-section"><p>No screenshot available</p></div>';
 
-                return `
+        return `
           <div class="result-item">
             <div class="result-header">
               <a href="${result.url}" class="url" target="_blank">${result.url}</a>
@@ -626,40 +630,40 @@ export class HtmlGenerator {
             </div>
           </div>
         `;
-            }
-        });
+      }
+    });
 
-        return resultItems.join('\n');
-    }
+    return resultItems.join('\n');
+  }
 
-    private sortResultsByChangeLevel(results: ScreenshotResult[]): ScreenshotResult[] {
-        // Define order of change levels (most significant first)
-        const levelOrder = {
-            [ChangeLevel.EXTREME]: 0,
-            [ChangeLevel.MAJOR]: 1,
-            [ChangeLevel.MODERATE]: 2,
-            [ChangeLevel.MINOR]: 3,
-            [ChangeLevel.MINIMAL]: 4,
-            [ChangeLevel.NONE]: 5
-        };
+  private sortResultsByChangeLevel(results: ScreenshotResult[]): ScreenshotResult[] {
+    // Define order of change levels (most significant first)
+    const levelOrder = {
+      [ChangeLevel.EXTREME]: 0,
+      [ChangeLevel.MAJOR]: 1,
+      [ChangeLevel.MODERATE]: 2,
+      [ChangeLevel.MINOR]: 3,
+      [ChangeLevel.MINIMAL]: 4,
+      [ChangeLevel.NONE]: 5,
+    };
 
-        return [...results].sort((a, b) => {
-            const aLevel = a.comparison?.changeLevel || ChangeLevel.NONE;
-            const bLevel = b.comparison?.changeLevel || ChangeLevel.NONE;
-            return levelOrder[aLevel] - levelOrder[bLevel];
-        });
-    }
+    return [...results].sort((a, b) => {
+      const aLevel = a.comparison?.changeLevel || ChangeLevel.NONE;
+      const bLevel = b.comparison?.changeLevel || ChangeLevel.NONE;
+      return levelOrder[aLevel] - levelOrder[bLevel];
+    });
+  }
 
-    private generateComparisonBadge(comparison: any): string {
-        const levelClass = comparison.changeLevel.toLowerCase();
-        const levelText = comparison.changeLevel.charAt(0).toUpperCase() + comparison.changeLevel.slice(1);
+  private generateComparisonBadge(comparison: any): string {
+    const levelClass = comparison.changeLevel.toLowerCase();
+    const levelText = comparison.changeLevel.charAt(0).toUpperCase() + comparison.changeLevel.slice(1);
 
-        return `
+    return `
             <div class="comparison-badge ${levelClass}">
                 <span class="change-level">${levelText}</span>
                 <span class="change-percentage">${comparison.diffPercentage}%</span>
                 <span class="pixel-count">${comparison.diffPixels.toLocaleString()} px</span>
             </div>
         `;
-    }
+  }
 }

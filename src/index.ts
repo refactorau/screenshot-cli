@@ -18,7 +18,7 @@ import {
   ReportType,
   ScreenshotOptions,
   ScreenshotResult,
-  generateFilenames
+  generateFilenames,
 } from './types';
 import { formatDuration, loadUrlsFromFile } from './utils';
 
@@ -141,11 +141,11 @@ program
         // Merge results and perform comparison for before/after mode
         const allResults = options.beforeAfter
           ? await mergeBeforeAfterResultsWithComparison(beforeResults, afterResults, {
-            threshold: parseFloat(options.comparisonThreshold),
-            minChangeThreshold: parseFloat(options.minChangeThreshold),
-            generateDiffImage: !options.skipDiffImages,
-            ignoreAntialiasing: false,
-          })
+              threshold: parseFloat(options.comparisonThreshold),
+              minChangeThreshold: parseFloat(options.minChangeThreshold),
+              generateDiffImage: !options.skipDiffImages,
+              ignoreAntialiasing: false,
+            })
           : singleResults;
 
         // Generate ReportData for data persistence
@@ -208,7 +208,7 @@ program
           minChangeThreshold: parseFloat(options.minChangeThreshold),
           generateDiffImage: !options.skipDiffImages,
           ignoreAntialiasing: false,
-          comparisonOnly: options.comparisonOnly
+          comparisonOnly: options.comparisonOnly,
         };
 
         if (screenshotOptions.reportType === ReportType.HTML || screenshotOptions.reportType === ReportType.ALL) {
@@ -251,30 +251,38 @@ program
   .description('Generate reports from existing data file')
   .argument('<data-file>', 'Path to the data file (.jsonc)')
   .option('--report-type <type>', 'Report type: html, pdf, all', 'html')
-  .action(async (dataFilePath: string, options: {
-    reportType: string
-  }) => {
-    try {
-      console.log(chalk.blue('🚀 Generating report from data file...'));
+  .action(
+    async (
+      dataFilePath: string,
+      options: {
+        reportType: string;
+      },
+    ) => {
+      try {
+        console.log(chalk.blue('🚀 Generating report from data file...'));
 
-      // Validate report type
-      if (!Object.values(ReportType).includes(options.reportType as ReportType)) {
-        console.error(chalk.red(`❌ Invalid report type: ${options.reportType}`));
-        console.error(chalk.gray('Valid types: html, pdf, all'));
+        // Validate report type
+        if (!Object.values(ReportType).includes(options.reportType as ReportType)) {
+          console.error(chalk.red(`❌ Invalid report type: ${options.reportType}`));
+          console.error(chalk.gray('Valid types: html, pdf, all'));
+          process.exit(1);
+        }
+
+        const generateOptions: GenerateOptions = {
+          dataFilePath: resolve(dataFilePath),
+          reportType: options.reportType as ReportType,
+        };
+
+        await generateReportsFromDataFile(generateOptions);
+      } catch (error) {
+        console.error(
+          chalk.red('❌ Error generating report:'),
+          error instanceof Error ? error.message : 'Unknown error',
+        );
         process.exit(1);
       }
-
-      const generateOptions: GenerateOptions = {
-        dataFilePath: resolve(dataFilePath),
-        reportType: options.reportType as ReportType,
-      };
-
-      await generateReportsFromDataFile(generateOptions);
-    } catch (error) {
-      console.error(chalk.red('❌ Error generating report:'), error instanceof Error ? error.message : 'Unknown error');
-      process.exit(1);
-    }
-  });
+    },
+  );
 
 // Compare subcommand
 program
@@ -285,117 +293,137 @@ program
   .option('--min-change-threshold <threshold>', 'Minimum change percentage to highlight (0-100)', '0.5')
   .option('--skip-diff-images', 'Skip generating diff images for unchanged pages')
   .option('--ignore-antialiasing', 'Ignore anti-aliased pixels in comparison')
-  .action(async (dataFilePath: string, options: {
-    comparisonThreshold: string,
-    minChangeThreshold: string,
-    skipDiffImages: boolean,
-    ignoreAntialiasing: boolean
-  }) => {
-    try {
-      console.log(chalk.blue('🔍 Adding comparison data to existing data file...'));
+  .action(
+    async (
+      dataFilePath: string,
+      options: {
+        comparisonThreshold: string;
+        minChangeThreshold: string;
+        skipDiffImages: boolean;
+        ignoreAntialiasing: boolean;
+      },
+    ) => {
+      try {
+        console.log(chalk.blue('🔍 Adding comparison data to existing data file...'));
 
-      // Load and validate data file
-      const dataFile = await DataPersistence.loadDataFile(resolve(dataFilePath));
+        // Load and validate data file
+        const dataFile = await DataPersistence.loadDataFile(resolve(dataFilePath));
 
-      if (dataFile.metadata.mode !== 'before-after') {
-        console.error(chalk.red('❌ Comparison can only be performed on before/after data files'));
-        process.exit(1);
-      }
+        if (dataFile.metadata.mode !== 'before-after') {
+          console.error(chalk.red('❌ Comparison can only be performed on before/after data files'));
+          process.exit(1);
+        }
 
-      // Resolve image paths for comparison
-      const resolvedDataFile = DataPersistence.resolveImagePaths(dataFile, resolve(dataFilePath));
+        // Resolve image paths for comparison
+        const resolvedDataFile = DataPersistence.resolveImagePaths(dataFile, resolve(dataFilePath));
 
-      // Build comparison options
-      const comparisonOptions: ComparisonOptions = {
-        threshold: parseFloat(options.comparisonThreshold),
-        minChangeThreshold: parseFloat(options.minChangeThreshold),
-        generateDiffImage: !options.skipDiffImages,
-        ignoreAntialiasing: options.ignoreAntialiasing,
-      };
+        // Build comparison options
+        const comparisonOptions: ComparisonOptions = {
+          threshold: parseFloat(options.comparisonThreshold),
+          minChangeThreshold: parseFloat(options.minChangeThreshold),
+          generateDiffImage: !options.skipDiffImages,
+          ignoreAntialiasing: options.ignoreAntialiasing,
+        };
 
-      console.log(chalk.gray(`📄 Loaded data file: ${resolvedDataFile.results.length} results`));
-      console.log(chalk.yellow('🔍 Performing image comparison...'));
+        console.log(chalk.gray(`📄 Loaded data file: ${resolvedDataFile.results.length} results`));
+        console.log(chalk.yellow('🔍 Performing image comparison...'));
 
-      // Perform comparison on results
-      const imageComparator = new ImageComparator();
-      let updatedCount = 0;
+        // Perform comparison on results
+        const imageComparator = new ImageComparator();
+        let updatedCount = 0;
 
-      for (const result of resolvedDataFile.results) {
-        if (result.beforePath && result.afterPath && result.beforeSuccess && result.afterSuccess) {
-          try {
-            const comparison = await imageComparator.compareImages(
-              result.beforePath,
-              result.afterPath,
-              comparisonOptions
-            );
+        for (const result of resolvedDataFile.results) {
+          if (result.beforePath && result.afterPath && result.beforeSuccess && result.afterSuccess) {
+            try {
+              const comparison = await imageComparator.compareImages(
+                result.beforePath,
+                result.afterPath,
+                comparisonOptions,
+              );
 
-            // Update the result with comparison data
-            result.comparison = comparison;
-            updatedCount++;
+              // Update the result with comparison data
+              result.comparison = comparison;
+              updatedCount++;
 
-            console.log(chalk.gray(`  ${result.url}: ${comparison.changeLevel} (${comparison.diffPercentage}%)`));
-          } catch (error) {
-            console.warn(chalk.yellow(`⚠️  Failed to compare images for ${result.url}: ${error instanceof Error ? error.message : 'Unknown error'}`));
+              console.log(chalk.gray(`  ${result.url}: ${comparison.changeLevel} (${comparison.diffPercentage}%)`));
+            } catch (error) {
+              console.warn(
+                chalk.yellow(
+                  `⚠️  Failed to compare images for ${result.url}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                ),
+              );
+            }
           }
         }
+
+        // Show comparison summary
+        const changedCount = resolvedDataFile.results.filter((r) => r.comparison?.hasSignificantChange).length;
+        const unchangedCount = resolvedDataFile.results.filter(
+          (r) => r.comparison && !r.comparison.hasSignificantChange,
+        ).length;
+
+        console.log(chalk.green(`✅ Image comparison complete: ${changedCount} changed, ${unchangedCount} unchanged`));
+
+        // Save updated data file
+        console.log(chalk.yellow('💾 Updating data file...'));
+
+        // Convert back to ReportData format for saving
+        const reportData: ReportData = {
+          results: resolvedDataFile.results.map((result) => ({
+            url: result.url,
+            timestamp: result.timestamp
+              ? new Date(result.timestamp)
+              : result.beforeTimestamp
+                ? new Date(result.beforeTimestamp)
+                : new Date(),
+            beforePath: result.beforePath,
+            afterPath: result.afterPath,
+            error: result.error || result.beforeError || result.afterError,
+            comparison: result.comparison,
+          })),
+          mode: resolvedDataFile.metadata.mode,
+          generatedAt: new Date(resolvedDataFile.metadata.generatedAt),
+          totalUrls: resolvedDataFile.metadata.totalUrls,
+          successCount: resolvedDataFile.metadata.successCount,
+          errorCount: resolvedDataFile.metadata.errorCount,
+        };
+
+        // Preserve original timing data
+        const beforePhase = resolvedDataFile.metadata.beforePhase
+          ? {
+              startTime: new Date(resolvedDataFile.metadata.beforePhase.startTime),
+              endTime: new Date(resolvedDataFile.metadata.beforePhase.endTime),
+              duration: resolvedDataFile.metadata.beforePhase.duration,
+            }
+          : undefined;
+
+        const afterPhase = resolvedDataFile.metadata.afterPhase
+          ? {
+              startTime: new Date(resolvedDataFile.metadata.afterPhase.startTime),
+              endTime: new Date(resolvedDataFile.metadata.afterPhase.endTime),
+              duration: resolvedDataFile.metadata.afterPhase.duration,
+            }
+          : undefined;
+
+        await DataPersistence.saveDataFile(
+          reportData,
+          resolve(dataFilePath),
+          resolvedDataFile.metadata.options,
+          beforePhase,
+          afterPhase,
+        );
+
+        console.log(chalk.green(`✅ Data file updated with comparison data for ${updatedCount} results`));
+        console.log(chalk.blue(`📄 Updated data file: ${resolve(dataFilePath)}`));
+      } catch (error) {
+        console.error(
+          chalk.red('❌ Error performing comparison:'),
+          error instanceof Error ? error.message : 'Unknown error',
+        );
+        process.exit(1);
       }
-
-      // Show comparison summary
-      const changedCount = resolvedDataFile.results.filter(r => r.comparison?.hasSignificantChange).length;
-      const unchangedCount = resolvedDataFile.results.filter(r => r.comparison && !r.comparison.hasSignificantChange).length;
-
-      console.log(chalk.green(`✅ Image comparison complete: ${changedCount} changed, ${unchangedCount} unchanged`));
-
-      // Save updated data file
-      console.log(chalk.yellow('💾 Updating data file...'));
-
-      // Convert back to ReportData format for saving
-      const reportData: ReportData = {
-        results: resolvedDataFile.results.map(result => ({
-          url: result.url,
-          timestamp: result.timestamp ? new Date(result.timestamp) :
-            result.beforeTimestamp ? new Date(result.beforeTimestamp) : new Date(),
-          beforePath: result.beforePath,
-          afterPath: result.afterPath,
-          error: result.error || result.beforeError || result.afterError,
-          comparison: result.comparison
-        })),
-        mode: resolvedDataFile.metadata.mode,
-        generatedAt: new Date(resolvedDataFile.metadata.generatedAt),
-        totalUrls: resolvedDataFile.metadata.totalUrls,
-        successCount: resolvedDataFile.metadata.successCount,
-        errorCount: resolvedDataFile.metadata.errorCount,
-      };
-
-      // Preserve original timing data
-      const beforePhase = resolvedDataFile.metadata.beforePhase ? {
-        startTime: new Date(resolvedDataFile.metadata.beforePhase.startTime),
-        endTime: new Date(resolvedDataFile.metadata.beforePhase.endTime),
-        duration: resolvedDataFile.metadata.beforePhase.duration
-      } : undefined;
-
-      const afterPhase = resolvedDataFile.metadata.afterPhase ? {
-        startTime: new Date(resolvedDataFile.metadata.afterPhase.startTime),
-        endTime: new Date(resolvedDataFile.metadata.afterPhase.endTime),
-        duration: resolvedDataFile.metadata.afterPhase.duration
-      } : undefined;
-
-      await DataPersistence.saveDataFile(
-        reportData,
-        resolve(dataFilePath),
-        resolvedDataFile.metadata.options,
-        beforePhase,
-        afterPhase
-      );
-
-      console.log(chalk.green(`✅ Data file updated with comparison data for ${updatedCount} results`));
-      console.log(chalk.blue(`📄 Updated data file: ${resolve(dataFilePath)}`));
-
-    } catch (error) {
-      console.error(chalk.red('❌ Error performing comparison:'), error instanceof Error ? error.message : 'Unknown error');
-      process.exit(1);
-    }
-  });
+    },
+  );
 
 function mergeBeforeAfterResults(
   beforeResults: ScreenshotResult[],
@@ -442,16 +470,16 @@ async function mergeBeforeAfterResultsWithComparison(
     // Perform image comparison if both images exist and there are no errors
     if (result.beforePath && result.afterPath && !result.error) {
       try {
-        const comparison = await imageComparator.compareImages(
-          result.beforePath,
-          result.afterPath,
-          comparisonOptions
-        );
+        const comparison = await imageComparator.compareImages(result.beforePath, result.afterPath, comparisonOptions);
         result.comparison = comparison;
 
         console.log(chalk.gray(`  ${result.url}: ${comparison.changeLevel} (${comparison.diffPercentage}%)`));
       } catch (error) {
-        console.warn(chalk.yellow(`⚠️  Failed to compare images for ${result.url}: ${error instanceof Error ? error.message : 'Unknown error'}`));
+        console.warn(
+          chalk.yellow(
+            `⚠️  Failed to compare images for ${result.url}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          ),
+        );
       }
     }
 
@@ -459,8 +487,8 @@ async function mergeBeforeAfterResultsWithComparison(
   }
 
   // Show comparison summary
-  const changedCount = merged.filter(r => r.comparison?.hasSignificantChange).length;
-  const unchangedCount = merged.filter(r => r.comparison && !r.comparison.hasSignificantChange).length;
+  const changedCount = merged.filter((r) => r.comparison?.hasSignificantChange).length;
+  const unchangedCount = merged.filter((r) => r.comparison && !r.comparison.hasSignificantChange).length;
 
   console.log(chalk.green(`✅ Image comparison complete: ${changedCount} changed, ${unchangedCount} unchanged`));
 

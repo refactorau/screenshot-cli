@@ -29,7 +29,11 @@ export class PDFGenerator {
     this.imageHeight = 350; // Increased height for landscape format
   }
 
-  async generateReport(dataFile: DataFile, outputPath: string, comparisonOptions?: Partial<ComparisonOptions & { comparisonOnly: boolean }>): Promise<void> {
+  async generateReport(
+    dataFile: DataFile,
+    outputPath: string,
+    comparisonOptions?: Partial<ComparisonOptions & { comparisonOnly: boolean }>,
+  ): Promise<void> {
     try {
       // Filter results if comparison-only is enabled (uses existing comparison data for filtering)
       if (comparisonOptions?.comparisonOnly && dataFile.metadata.mode === 'before-after') {
@@ -104,12 +108,14 @@ export class PDFGenerator {
     if (hasComparison) {
       // Calculate comparison summary from stored comparison data
       const changedCount = dataFile.results.filter((r: any) => r.comparison?.hasSignificantChange).length;
-      const unchangedCount = dataFile.results.filter((r: any) => r.comparison && !r.comparison.hasSignificantChange).length;
+      const unchangedCount = dataFile.results.filter(
+        (r: any) => r.comparison && !r.comparison.hasSignificantChange,
+      ).length;
 
       comparisonSummary = {
         changedCount,
         unchangedCount,
-        totalComparisons: changedCount + unchangedCount
+        totalComparisons: changedCount + unchangedCount,
       };
     }
 
@@ -143,7 +149,10 @@ export class PDFGenerator {
       .fillColor('#3fb950')
       .fontSize(24)
       .font('Helvetica-Bold')
-      .text(dataFile.metadata.successCount.toString(), currentCardX, statsY + 15, { width: cardWidth, align: 'center' });
+      .text(dataFile.metadata.successCount.toString(), currentCardX, statsY + 15, {
+        width: cardWidth,
+        align: 'center',
+      });
 
     this.doc
       .fillColor('#8b949e')
@@ -177,7 +186,10 @@ export class PDFGenerator {
         .fillColor('#f79000')
         .fontSize(24)
         .font('Helvetica-Bold')
-        .text(comparisonSummary.changedCount.toString(), currentCardX, statsY + 15, { width: cardWidth, align: 'center' });
+        .text(comparisonSummary.changedCount.toString(), currentCardX, statsY + 15, {
+          width: cardWidth,
+          align: 'center',
+        });
 
       this.doc
         .fillColor('#8b949e')
@@ -193,7 +205,10 @@ export class PDFGenerator {
         .fillColor('#8b949e')
         .fontSize(24)
         .font('Helvetica-Bold')
-        .text(comparisonSummary.unchangedCount.toString(), currentCardX, statsY + 15, { width: cardWidth, align: 'center' });
+        .text(comparisonSummary.unchangedCount.toString(), currentCardX, statsY + 15, {
+          width: cardWidth,
+          align: 'center',
+        });
 
       this.doc
         .fillColor('#8b949e')
@@ -244,7 +259,7 @@ export class PDFGenerator {
         const badgeX = this.margin + urlWidth + 20; // 20px gap from URL
         const badgeHeight = 30;
         // Calculate vertical center: URL baseline + (fontSize/2) - (badgeHeight/2)
-        const badgeY = urlY + (fontSize / 2) - (badgeHeight / 2);
+        const badgeY = urlY + fontSize / 2 - badgeHeight / 2;
         this.addComparisonBadge((result as any).comparison, badgeX, badgeY);
       }
 
@@ -384,7 +399,7 @@ export class PDFGenerator {
     this.doc.rect(x, y, badgeWidth, badgeHeight).fill(colors.background).stroke(colors.border);
 
     // Calculate vertical center for text positioning
-    const getCenteredY = (fontSize: number) => y + (badgeHeight / 2) - (fontSize / 2) + 2; // +2 for better visual balance
+    const getCenteredY = (fontSize: number) => y + badgeHeight / 2 - fontSize / 2 + 2; // +2 for better visual balance
 
     // Add change level text (vertically centered)
     this.doc
@@ -406,24 +421,31 @@ export class PDFGenerator {
 
   private getChangeColors(changeLevel: string): { background: string; border: string; text: string } {
     switch (changeLevel) {
-      case 'none': return { background: '#30363d', border: '#8b949e', text: '#8b949e' };
-      case 'minimal': return { background: '#1f2937', border: '#60a5fa', text: '#60a5fa' };
-      case 'minor': return { background: '#1e3a8a', border: '#93c5fd', text: '#93c5fd' };
-      case 'moderate': return { background: '#92400e', border: '#fbbf24', text: '#fbbf24' };
-      case 'major': return { background: '#991b1b', border: '#fca5a5', text: '#fca5a5' };
-      case 'extreme': return { background: '#581c87', border: '#c4b5fd', text: '#c4b5fd' };
-      default: return { background: '#30363d', border: '#8b949e', text: '#8b949e' };
+      case 'none':
+        return { background: '#30363d', border: '#8b949e', text: '#8b949e' };
+      case 'minimal':
+        return { background: '#1f2937', border: '#60a5fa', text: '#60a5fa' };
+      case 'minor':
+        return { background: '#1e3a8a', border: '#93c5fd', text: '#93c5fd' };
+      case 'moderate':
+        return { background: '#92400e', border: '#fbbf24', text: '#fbbf24' };
+      case 'major':
+        return { background: '#991b1b', border: '#fca5a5', text: '#fca5a5' };
+      case 'extreme':
+        return { background: '#581c87', border: '#c4b5fd', text: '#c4b5fd' };
+      default:
+        return { background: '#30363d', border: '#8b949e', text: '#8b949e' };
     }
   }
 
   private sortResultsByChangeLevel(results: any[]): any[] {
     const levelOrder: Record<string, number> = {
-      'extreme': 0,
-      'major': 1,
-      'moderate': 2,
-      'minor': 3,
-      'minimal': 4,
-      'none': 5
+      extreme: 0,
+      major: 1,
+      moderate: 2,
+      minor: 3,
+      minimal: 4,
+      none: 5,
     };
 
     return [...results].sort((a, b) => {

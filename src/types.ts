@@ -29,16 +29,16 @@ export interface ComparisonResult {
 }
 
 export enum ChangeLevel {
-  NONE = 'none',           // 0-0.1% difference
-  MINIMAL = 'minimal',     // 0.1-1% difference  
-  MINOR = 'minor',         // 1-5% difference
-  MODERATE = 'moderate',   // 5-15% difference
-  MAJOR = 'major',         // 15-50% difference
-  EXTREME = 'extreme'      // 50%+ difference
+  NONE = 'none', // 0-0.1% difference
+  MINIMAL = 'minimal', // 0.1-1% difference
+  MINOR = 'minor', // 1-5% difference
+  MODERATE = 'moderate', // 5-15% difference
+  MAJOR = 'major', // 15-50% difference
+  EXTREME = 'extreme', // 50%+ difference
 }
 
 export interface ComparisonOptions {
-  threshold: number;          // pixelmatch threshold (0-1)
+  threshold: number; // pixelmatch threshold (0-1)
   generateDiffImage: boolean; // create visual diff image
   ignoreAntialiasing: boolean; // ignore anti-aliased pixels
   minChangeThreshold: number; // minimum % to consider "changed"
