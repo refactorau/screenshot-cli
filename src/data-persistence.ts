@@ -35,24 +35,24 @@ export class DataPersistence {
         },
         beforePhase: beforePhase
           ? {
-              startTime: beforePhase.startTime.toISOString(),
-              endTime: beforePhase.endTime.toISOString(),
-              duration: beforePhase.duration,
-            }
+            startTime: beforePhase.startTime.toISOString(),
+            endTime: beforePhase.endTime.toISOString(),
+            duration: beforePhase.duration,
+          }
           : undefined,
         afterPhase: afterPhase
           ? {
-              startTime: afterPhase.startTime.toISOString(),
-              endTime: afterPhase.endTime.toISOString(),
-              duration: afterPhase.duration,
-            }
+            startTime: afterPhase.startTime.toISOString(),
+            endTime: afterPhase.endTime.toISOString(),
+            duration: afterPhase.duration,
+          }
           : undefined,
       },
       results: reportData.results.map((result) => ({
         url: result.url,
         timestamp: result.singlePath ? result.timestamp.toISOString() : undefined,
-        beforeTimestamp: result.beforePath ? result.timestamp.toISOString() : undefined,
-        afterTimestamp: result.afterPath ? result.timestamp.toISOString() : undefined,
+        beforeTimestamp: result.beforePath ? (result.beforeTimestamp || result.timestamp).toISOString() : undefined,
+        afterTimestamp: result.afterPath ? (result.afterTimestamp || result.timestamp).toISOString() : undefined,
         singlePath: result.singlePath ? path.relative(path.dirname(dataFilePath), result.singlePath) : undefined,
         beforePath: result.beforePath ? path.relative(path.dirname(dataFilePath), result.beforePath) : undefined,
         afterPath: result.afterPath ? path.relative(path.dirname(dataFilePath), result.afterPath) : undefined,
@@ -62,11 +62,11 @@ export class DataPersistence {
         afterSuccess: result.afterPath ? !result.error : undefined,
         comparison: result.comparison
           ? {
-              ...result.comparison,
-              diffImagePath: result.comparison.diffImagePath
-                ? path.relative(path.dirname(dataFilePath), result.comparison.diffImagePath)
-                : undefined,
-            }
+            ...result.comparison,
+            diffImagePath: result.comparison.diffImagePath
+              ? path.relative(path.dirname(dataFilePath), result.comparison.diffImagePath)
+              : undefined,
+          }
           : undefined,
       })),
     };
@@ -113,11 +113,11 @@ export class DataPersistence {
         afterPath: result.afterPath ? path.resolve(baseDir, result.afterPath) : undefined,
         comparison: result.comparison
           ? {
-              ...result.comparison,
-              diffImagePath: result.comparison.diffImagePath
-                ? path.resolve(baseDir, result.comparison.diffImagePath)
-                : undefined,
-            }
+            ...result.comparison,
+            diffImagePath: result.comparison.diffImagePath
+              ? path.resolve(baseDir, result.comparison.diffImagePath)
+              : undefined,
+          }
           : undefined,
       })),
     };
@@ -135,11 +135,10 @@ export class DataPersistence {
   "metadata": {
     // Basic report information
     "version": "${dataFile.metadata.version}",           // Screenshot CLI version used
-    "mode": "${dataFile.metadata.mode}",${
-      mode === 'single'
+    "mode": "${dataFile.metadata.mode}",${mode === 'single'
         ? '             // Screenshot mode: "single" or "before-after"'
         : '       // Screenshot mode: "single" or "before-after"'
-    }
+      }
     "generatedAt": "${dataFile.metadata.generatedAt}",
     "totalUrls": ${dataFile.metadata.totalUrls},
     "successCount": ${dataFile.metadata.successCount},
@@ -186,50 +185,45 @@ export class DataPersistence {
       "url": "${result.url}",
       "timestamp": "${result.timestamp}",
       "singlePath": "${result.singlePath}",    // Relative path to screenshot
-      "success": ${result.success}${
-        result.error
-          ? `,
+      "success": ${result.success}${result.error
+            ? `,
       "error": "${result.error}"  // Error message if failed`
-          : ''
-      }
+            : ''
+          }
     }${isLast ? '' : ','}`;
       } else {
         content += `
     {
       "url": "${result.url}",
-      "beforeTimestamp": "${result.beforeTimestamp}",
-      "afterTimestamp": "${result.afterTimestamp}",
-      "beforePath": "${result.beforePath}",    // Relative path to before screenshot
-      "afterPath": "${result.afterPath}",      // Relative path to after screenshot
-      "beforeSuccess": ${result.beforeSuccess},
-      "afterSuccess": ${result.afterSuccess},
-      "success": ${result.success}${result.beforeError || result.afterError || result.comparison ? ',' : ''}             // Overall success (both phases succeeded)${
-        result.beforeError || result.afterError
-          ? `
-      ${result.beforeError ? `"beforeError": "${result.beforeError}"` : ''}${
-        result.beforeError && result.afterError
-          ? `,
+      "beforeTimestamp": ${result.beforeTimestamp ? `"${result.beforeTimestamp}"` : 'null'},
+      "afterTimestamp": ${result.afterTimestamp ? `"${result.afterTimestamp}"` : 'null'},
+      "beforePath": ${result.beforePath ? `"${result.beforePath}"` : 'null'},    // Relative path to before screenshot
+      "afterPath": ${result.afterPath ? `"${result.afterPath}"` : 'null'},      // Relative path to after screenshot
+      "beforeSuccess": ${result.beforeSuccess !== undefined ? result.beforeSuccess : 'null'},
+      "afterSuccess": ${result.afterSuccess !== undefined ? result.afterSuccess : 'null'},
+      "success": ${result.success}${result.beforeError || result.afterError || result.comparison ? ',' : ''}             // Overall success (both phases succeeded)${result.beforeError || result.afterError
+            ? `
+      ${result.beforeError ? `"beforeError": "${result.beforeError}"` : ''}${result.beforeError && result.afterError
+              ? `,
       `
-          : ''
-      }${result.afterError ? `"afterError": "${result.afterError}"` : ''}${result.comparison ? ',' : ''}  // Error messages if failed`
-          : ''
-      }${
-        result.comparison
-          ? `
+              : ''
+            }${result.afterError ? `"afterError": "${result.afterError}"` : ''}${result.comparison ? ',' : ''}  // Error messages if failed`
+            : ''
+          }${result.comparison
+            ? `
       "comparison": {
         "diffPixels": ${result.comparison.diffPixels},
         "totalPixels": ${result.comparison.totalPixels},
         "diffPercentage": ${result.comparison.diffPercentage},
         "changeLevel": "${result.comparison.changeLevel}",
-        "hasSignificantChange": ${result.comparison.hasSignificantChange}${
-          result.comparison.diffImagePath
-            ? `,
+        "hasSignificantChange": ${result.comparison.hasSignificantChange}${result.comparison.diffImagePath
+              ? `,
         "diffImagePath": "${result.comparison.diffImagePath}"  // Relative path to diff image`
-            : ''
-        }
+              : ''
+            }
       }`
-          : ''
-      }
+            : ''
+          }
     }${isLast ? '' : ','}`;
       }
     });

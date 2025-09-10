@@ -2,6 +2,8 @@ export interface ScreenshotOptions {
   urls: string[];
   output: string;
   beforeAfter: boolean;
+  before: boolean;
+  after: boolean;
   width: number;
   height: number;
   timeout: number;
@@ -51,6 +53,8 @@ export interface ScreenshotResult {
   singlePath?: string;
   error?: string;
   timestamp: Date;
+  beforeTimestamp?: Date;
+  afterTimestamp?: Date;
   comparison?: ComparisonResult;
 }
 

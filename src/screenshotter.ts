@@ -1,9 +1,8 @@
-import { chromium, Browser, Page } from 'playwright';
-import { join } from 'path';
-import chalk from 'chalk';
 import ora from 'ora';
+import { join } from 'path';
+import { Browser, chromium } from 'playwright';
 import { ScreenshotOptions, ScreenshotResult } from './types';
-import { sanitizeFilename, ensureDirectory } from './utils';
+import { ensureDirectory, sanitizeFilename } from './utils';
 
 export class Screenshotter {
   private browser: Browser | null = null;
@@ -122,7 +121,7 @@ export class Screenshotter {
       await page.waitForTimeout(2000);
 
       const filename = sanitizeFilename(url);
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const timestampString = new Date().toISOString().replace(/[:.]/g, '-');
 
       let screenshotPath: string;
       const screenshotsDir = join(options.output, 'screenshots');
@@ -138,17 +137,20 @@ export class Screenshotter {
         fullPage: true,
       });
 
+      const timestamp = new Date();
       const result: ScreenshotResult = {
         url,
-        timestamp: new Date(),
+        timestamp,
       };
 
       if (mode === 'single') {
         result.singlePath = screenshotPath;
       } else if (mode === 'before') {
         result.beforePath = screenshotPath;
+        result.beforeTimestamp = timestamp;
       } else {
         result.afterPath = screenshotPath;
+        result.afterTimestamp = timestamp;
       }
 
       return result;

@@ -2,6 +2,7 @@
 
 import chalk from 'chalk';
 import { Command } from 'commander';
+import fs from 'fs';
 import inquirer from 'inquirer';
 import { basename, dirname, resolve } from 'path';
 import packageJson from '../package.json';
@@ -39,7 +40,9 @@ program
     'Path to file containing URLs (JS file exporting array or text file with one URL per line)',
   )
   .option('-o, --output <directory>', 'Output directory for screenshots', 'output')
-  .option('-b, --before-after', 'Enable before/after comparison mode')
+  .option('-b, --before-after', 'Enable before/after comparison mode (captures both before and after in sequence)')
+  .option('--before', 'Capture only before screenshots')
+  .option('--after', 'Capture only after screenshots')
   .option('-w, --width <width>', 'Viewport width', '1920')
   .option('-h, --height <height>', 'Viewport height', '1080')
   .option('-t, --timeout <timeout>', 'Page load timeout in milliseconds', '30000')
@@ -77,6 +80,13 @@ program
 
       console.log(chalk.green(`📋 Found ${urls.length} URLs to process`));
 
+      // Validate mutually exclusive flags
+      const modeFlags = [options.beforeAfter, options.before, options.after].filter(Boolean);
+      if (modeFlags.length > 1) {
+        console.error(chalk.red('❌ Only one of --before-after, --before, or --after can be specified'));
+        process.exit(1);
+      }
+
       // Validate report type
       if (!Object.values(ReportType).includes(options.reportType as ReportType)) {
         console.error(chalk.red(`❌ Invalid report type: ${options.reportType}`));
@@ -88,6 +98,8 @@ program
         urls,
         output: resolve(options.output),
         beforeAfter: options.beforeAfter,
+        before: options.before,
+        after: options.after,
         width: parseInt(options.width),
         height: parseInt(options.height),
         timeout: parseInt(options.timeout),
@@ -133,25 +145,44 @@ program
             console.log(chalk.gray('❌ Cancelled by user'));
             process.exit(0);
           }
+        } else if (options.before) {
+          console.log(chalk.yellow('📷 Taking BEFORE screenshots...'));
+          beforeResults = await screenshotter.takeScreenshots(urls, screenshotOptions, 'before');
+          console.log(chalk.green('✅ Before screenshots complete!'));
+        } else if (options.after) {
+          console.log(chalk.yellow('📷 Taking AFTER screenshots...'));
+          afterResults = await screenshotter.takeScreenshots(urls, screenshotOptions, 'after');
+          console.log(chalk.green('✅ After screenshots complete!'));
         } else {
           console.log(chalk.yellow('📷 Taking screenshots...'));
           singleResults = await screenshotter.takeScreenshots(urls, screenshotOptions, 'single');
         }
 
         // Merge results and perform comparison for before/after mode
-        const allResults = options.beforeAfter
-          ? await mergeBeforeAfterResultsWithComparison(beforeResults, afterResults, {
-              threshold: parseFloat(options.comparisonThreshold),
-              minChangeThreshold: parseFloat(options.minChangeThreshold),
-              generateDiffImage: !options.skipDiffImages,
-              ignoreAntialiasing: false,
-            })
-          : singleResults;
+        let allResults: ScreenshotResult[] = [];
+
+        if (options.beforeAfter) {
+          allResults = await mergeBeforeAfterResultsWithComparison(beforeResults, afterResults, {
+            threshold: parseFloat(options.comparisonThreshold),
+            minChangeThreshold: parseFloat(options.minChangeThreshold),
+            generateDiffImage: !options.skipDiffImages,
+            ignoreAntialiasing: false,
+          });
+        } else if (options.before) {
+          allResults = beforeResults;
+        } else if (options.after) {
+          allResults = afterResults;
+        } else {
+          allResults = singleResults;
+        }
 
         // Generate ReportData for data persistence
+        const mode = options.beforeAfter ? 'before-after' :
+          (options.before || options.after) ? 'before-after' : 'single';
+
         const reportData: ReportData = {
           results: allResults,
-          mode: options.beforeAfter ? 'before-after' : 'single',
+          mode,
           generatedAt: new Date(),
           totalUrls: urls.length,
           successCount: allResults.filter((r: ScreenshotResult) => !r.error).length,
@@ -160,17 +191,21 @@ program
 
         // Calculate phase timing for before/after mode
         let beforePhase, afterPhase;
-        if (options.beforeAfter && beforeResults.length > 0 && afterResults.length > 0) {
+
+        if (beforeResults.length > 0) {
           const beforeStart = Math.min(...beforeResults.map((r) => r.timestamp.getTime()));
           const beforeEnd = Math.max(...beforeResults.map((r) => r.timestamp.getTime()));
-          const afterStart = Math.min(...afterResults.map((r) => r.timestamp.getTime()));
-          const afterEnd = Math.max(...afterResults.map((r) => r.timestamp.getTime()));
 
           beforePhase = {
             startTime: new Date(beforeStart),
             endTime: new Date(beforeEnd),
             duration: formatDuration(beforeEnd - beforeStart),
           };
+        }
+
+        if (afterResults.length > 0) {
+          const afterStart = Math.min(...afterResults.map((r) => r.timestamp.getTime()));
+          const afterEnd = Math.max(...afterResults.map((r) => r.timestamp.getTime()));
 
           afterPhase = {
             startTime: new Date(afterStart),
@@ -181,9 +216,100 @@ program
 
         console.log(chalk.yellow('💾 Saving data file...'));
 
-        // Save data file first
+        // For independent before/after modes, merge with existing data if it exists
+        let finalReportData = reportData;
+
+        if ((options.before || options.after || (!options.beforeAfter && !options.before && !options.after)) && fs.existsSync(filenames.dataFile)) {
+          try {
+            console.log(chalk.gray('📄 Loading existing data file to merge...'));
+            const existingDataFile = await DataPersistence.loadDataFile(filenames.dataFile);
+            const resolvedExistingData = DataPersistence.resolveImagePaths(existingDataFile, filenames.dataFile);
+
+            // Merge the results
+            const mergedResults: ScreenshotResult[] = [];
+
+            // Process new results and merge with existing ones
+            for (const newResult of reportData.results) {
+              const existingResult = resolvedExistingData.results.find(r => r.url === newResult.url);
+
+              if (existingResult) {
+                // Merge existing and new data
+                const merged: ScreenshotResult = {
+                  url: newResult.url,
+                  timestamp: newResult.timestamp,
+                  // Handle different modes
+                  singlePath: (!options.before && !options.after && !options.beforeAfter) ? newResult.singlePath : existingResult.singlePath,
+                  beforePath: options.before ? newResult.beforePath : existingResult.beforePath,
+                  afterPath: options.after ? newResult.afterPath : existingResult.afterPath,
+                  error: newResult.error || existingResult.error || existingResult.beforeError || existingResult.afterError,
+                  comparison: existingResult.comparison,
+                  // Preserve original timestamps
+                  beforeTimestamp: options.before ? newResult.timestamp :
+                    (existingResult.beforeTimestamp ? new Date(existingResult.beforeTimestamp) : undefined),
+                  afterTimestamp: options.after ? newResult.timestamp :
+                    (existingResult.afterTimestamp ? new Date(existingResult.afterTimestamp) : undefined),
+                };
+                mergedResults.push(merged);
+              } else {
+                mergedResults.push(newResult);
+              }
+            }
+
+            // Add existing results that weren't updated (preserve URLs not in current capture)
+            for (const existingResult of resolvedExistingData.results) {
+              const isUpdated = reportData.results.some(r => r.url === existingResult.url);
+              if (!isUpdated) {
+                // Convert existing result back to ScreenshotResult format
+                const preserved: ScreenshotResult = {
+                  url: existingResult.url,
+                  timestamp: existingResult.timestamp ? new Date(existingResult.timestamp) :
+                    existingResult.beforeTimestamp ? new Date(existingResult.beforeTimestamp) :
+                      existingResult.afterTimestamp ? new Date(existingResult.afterTimestamp) : new Date(),
+                  singlePath: existingResult.singlePath,
+                  beforePath: existingResult.beforePath,
+                  afterPath: existingResult.afterPath,
+                  error: existingResult.error || existingResult.beforeError || existingResult.afterError,
+                  comparison: existingResult.comparison,
+                  beforeTimestamp: existingResult.beforeTimestamp ? new Date(existingResult.beforeTimestamp) : undefined,
+                  afterTimestamp: existingResult.afterTimestamp ? new Date(existingResult.afterTimestamp) : undefined,
+                };
+                mergedResults.push(preserved);
+              }
+            }
+
+            // Update report data with merged results
+            finalReportData = {
+              ...reportData,
+              results: mergedResults,
+            };
+
+            // Preserve existing phase timing
+            if (!beforePhase && existingDataFile.metadata.beforePhase) {
+              beforePhase = {
+                startTime: new Date(existingDataFile.metadata.beforePhase.startTime),
+                endTime: new Date(existingDataFile.metadata.beforePhase.endTime),
+                duration: existingDataFile.metadata.beforePhase.duration,
+              };
+            }
+
+            if (!afterPhase && existingDataFile.metadata.afterPhase) {
+              afterPhase = {
+                startTime: new Date(existingDataFile.metadata.afterPhase.startTime),
+                endTime: new Date(existingDataFile.metadata.afterPhase.endTime),
+                duration: existingDataFile.metadata.afterPhase.duration,
+              };
+            }
+
+            console.log(chalk.green('✅ Merged with existing data'));
+          } catch (error) {
+            console.warn(chalk.yellow(`⚠️  Could not merge with existing data file: ${error instanceof Error ? error.message : 'Unknown error'}`));
+            console.warn(chalk.yellow('Creating new data file instead'));
+          }
+        }
+
+        // Save data file
         await DataPersistence.saveDataFile(
-          reportData,
+          finalReportData,
           filenames.dataFile,
           {
             waitStrategy: screenshotOptions.waitStrategy || 'load',
@@ -391,18 +517,18 @@ program
         // Preserve original timing data
         const beforePhase = resolvedDataFile.metadata.beforePhase
           ? {
-              startTime: new Date(resolvedDataFile.metadata.beforePhase.startTime),
-              endTime: new Date(resolvedDataFile.metadata.beforePhase.endTime),
-              duration: resolvedDataFile.metadata.beforePhase.duration,
-            }
+            startTime: new Date(resolvedDataFile.metadata.beforePhase.startTime),
+            endTime: new Date(resolvedDataFile.metadata.beforePhase.endTime),
+            duration: resolvedDataFile.metadata.beforePhase.duration,
+          }
           : undefined;
 
         const afterPhase = resolvedDataFile.metadata.afterPhase
           ? {
-              startTime: new Date(resolvedDataFile.metadata.afterPhase.startTime),
-              endTime: new Date(resolvedDataFile.metadata.afterPhase.endTime),
-              duration: resolvedDataFile.metadata.afterPhase.duration,
-            }
+            startTime: new Date(resolvedDataFile.metadata.afterPhase.startTime),
+            endTime: new Date(resolvedDataFile.metadata.afterPhase.endTime),
+            duration: resolvedDataFile.metadata.afterPhase.duration,
+          }
           : undefined;
 
         await DataPersistence.saveDataFile(

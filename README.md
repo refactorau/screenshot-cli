@@ -6,6 +6,7 @@ A TypeScript CLI tool that takes screenshots of web pages and generates styled H
 
 - 📸 Take full-page screenshots of websites
 - 🔄 Before/after comparison mode with real-time image analysis
+- 🆕 Independent before/after capture - capture at different times
 - 📊 Beautiful HTML and PDF reports with dark theme
 - 📁 Multiple input methods (URLs, text files, JS files)
 - 🎨 Responsive design with modern UI
@@ -18,6 +19,7 @@ A TypeScript CLI tool that takes screenshots of web pages and generates styled H
 - 💾 Data persistence with `.jsonc` files for report regeneration
 - 🔍 Image comparison performed during capture with persistent storage
 - 🔄 Separate report generation from existing data files
+- 🔁 Smart data merging for re-capturing and partial updates
 
 ## Installation
 
@@ -52,7 +54,11 @@ The CLI has three main commands: `capture` for taking screenshots, `compare` for
 
 ### Command Overview
 
-- **`capture`** - Takes screenshots and optionally performs image comparison (if `--before-after` is used)
+- **`capture`** - Takes screenshots with flexible modes:
+  - Default: Single screenshots with smart merging
+  - `--before-after`: Sequential before/after with immediate comparison
+  - `--before`: Independent before screenshots
+  - `--after`: Independent after screenshots
 - **`compare`** - Adds or updates image comparison data in existing before/after data files
 - **`generate`** - Creates HTML/PDF reports from data files (uses existing comparison data, no image processing)
 
@@ -69,10 +75,12 @@ pnpm capture --file urls.txt
 pnpm capture --file urls.js
 ```
 
-### Before/After Mode
+### Before/After Comparison Modes
+
+#### Traditional Before/After Mode
 
 ```bash
-# Enable before/after comparison
+# Enable sequential before/after comparison
 pnpm capture --file urls.txt --before-after
 
 # The tool will:
@@ -86,6 +94,31 @@ pnpm capture --file urls.txt --before-after
 # You'll see comparison progress during capture:
 # ✅ Image comparison complete: 3 changed, 7 unchanged
 ```
+
+#### Independent Before/After Capture
+
+Capture before and after screenshots at different times - perfect for deployments, A/B testing, or long-term monitoring:
+
+```bash
+# Step 1: Capture "before" screenshots (e.g., before deployment)
+pnpm capture --before --file urls.txt --title "Pre-Deploy"
+
+# Step 2: Later, capture "after" screenshots (e.g., after deployment)
+pnpm capture --after --file urls.txt --title "Pre-Deploy"
+
+# Step 3: Add comparison data
+pnpm compare pre-deploy-data.jsonc
+
+# Step 4: Generate final report
+pnpm generate pre-deploy-data.jsonc
+```
+
+**Key Benefits:**
+
+- 🕐 **Flexible Timing**: Capture before/after at any interval (minutes, hours, days)
+- 🔄 **Re-capturable**: Update either before or after screenshots independently
+- 📊 **Data Preservation**: Original timestamps and data are preserved
+- 🔁 **Smart Merging**: Automatically merges new captures with existing data
 
 ### Compare Mode
 
@@ -143,22 +176,43 @@ This enables:
 
 ### Capture Options
 
+#### Basic Options
+
 - `-u, --urls <urls>` - Comma-separated list of URLs
 - `-f, --file <file>` - Path to file containing URLs
 - `-o, --output <directory>` - Output directory (default: output)
-- `-b, --before-after` - Enable before/after comparison mode
+- `--title <title>` - Report title (used for filenames) (default: Report)
+
+#### Capture Modes
+
+- `-b, --before-after` - Enable sequential before/after comparison mode
+- `--before` - Capture only before screenshots (for independent workflow)
+- `--after` - Capture only after screenshots (for independent workflow)
+
+**Note:** Only one of `--before-after`, `--before`, or `--after` can be used at a time.
+
+#### Browser Configuration
+
 - `-w, --width <width>` - Viewport width (default: 1920)
 - `-h, --height <height>` - Viewport height (default: 1080)
 - `-t, --timeout <timeout>` - Page load timeout in milliseconds (default: 30000)
+- `--wait-strategy <strategy>` - Page load wait strategy: networkidle, load, domcontentloaded (default: load)
+
+#### Network & Reliability
+
 - `-r, --max-retries <retries>` - Maximum retry attempts for network errors (default: 3)
 - `--retry-delay <delay>` - Delay between retries in milliseconds (default: 2000)
-- `--wait-strategy <strategy>` - Page load wait strategy: networkidle, load, domcontentloaded (default: load)
+
+#### Report Generation
+
 - `--report-type <type>` - Report type: html, pdf, all (default: html)
-- `--title <title>` - Report title (used for filenames) (default: Report)
+
+#### Comparison Settings
+
 - `--comparison-threshold <threshold>` - Pixelmatch threshold for comparison (0-1) (default: 0.1)
 - `--min-change-threshold <threshold>` - Minimum change percentage to highlight (0-100) (default: 0.5)
 - `--skip-diff-images` - Skip generating diff images for unchanged pages
-- `--comparison-only` - Only show pages with changes in reports (requires --before-after)
+- `--comparison-only` - Only show pages with changes in reports
 
 ### Generate Options
 
@@ -216,10 +270,24 @@ The tool generates:
 pnpm capture --urls "https://example.com" --output ./screenshots --title "Example Site"
 ```
 
-### Before/After Mode
+### Traditional Before/After Mode
 
 ```bash
 pnpm capture --file urls.txt --before-after --output ./comparison --title "Site Comparison"
+```
+
+### Independent Before/After Workflow
+
+```bash
+# Capture before screenshots (e.g., before deployment)
+pnpm capture --before --file urls.txt --output ./deploy-comparison --title "Deploy-Check"
+
+# Later: capture after screenshots (e.g., after deployment)
+pnpm capture --after --file urls.txt --output ./deploy-comparison --title "Deploy-Check"
+
+# Add comparison data and generate report
+pnpm compare ./deploy-comparison/deploy-check-data.jsonc
+pnpm generate ./deploy-comparison/deploy-check-data.jsonc
 ```
 
 ### Custom Viewport and PDF Report
@@ -305,16 +373,95 @@ If you're using VS Code, the project includes recommended settings that will:
 
 Simply open the project in VS Code and accept the extension recommendations for the best development experience.
 
-## Data Persistence
+## Data Persistence & Smart Merging
 
-The tool saves all screenshot data and metadata to `.jsonc` files, allowing you to:
+The tool saves all screenshot data and metadata to `.jsonc` files with intelligent merging capabilities:
+
+### Core Features
 
 - Regenerate reports without retaking screenshots
 - Switch between HTML and PDF formats
 - Share data files for collaborative reporting
 - Archive screenshot sessions with full metadata
 
-This separation of capture and generation phases makes the tool more efficient and flexible for different workflows.
+### Smart Data Merging
+
+- **Re-capturing**: Update specific URLs without losing other data
+- **Independent Workflows**: Merge before/after captures taken at different times
+- **Timestamp Preservation**: Original capture times are never overwritten
+- **Partial Updates**: Add new URLs to existing datasets
+- **Data Integrity**: Automatic conflict resolution and data validation
+
+### Examples
+
+```bash
+# Initial capture of multiple URLs
+pnpm capture --urls "https://site1.com,https://site2.com,https://site3.com" --title "Multi-Site"
+
+# Later: re-capture only one URL (others are preserved)
+pnpm capture --urls "https://site2.com" --title "Multi-Site"
+
+# Result: site1.com and site3.com keep original data, site2.com gets updated
+```
+
+This separation of capture and generation phases, combined with smart merging, makes the tool highly efficient and flexible for different workflows.
+
+## Common Workflow Patterns
+
+### 1. Deployment Verification
+
+```bash
+# Before deployment
+pnpm capture --before --file production-urls.txt --title "Deploy-v2.1"
+
+# Deploy your changes...
+
+# After deployment
+pnpm capture --after --file production-urls.txt --title "Deploy-v2.1"
+
+# Generate comparison report
+pnpm compare deploy-v2.1-data.jsonc
+pnpm generate --report-type all deploy-v2.1-data.jsonc
+```
+
+### 2. A/B Testing
+
+```bash
+# Capture variant A
+pnpm capture --before --urls "https://mysite.com/landing-a" --title "AB-Test"
+
+# Switch to variant B and capture
+pnpm capture --after --urls "https://mysite.com/landing-b" --title "AB-Test"
+
+# Compare variants
+pnpm compare ab-test-data.jsonc
+```
+
+### 3. Long-term Monitoring
+
+```bash
+# Weekly screenshots
+pnpm capture --before --file monitoring-urls.txt --title "Weekly-$(date +%Y-%m-%d)"
+
+# Next week
+pnpm capture --after --file monitoring-urls.txt --title "Weekly-$(date +%Y-%m-%d)"
+
+# Generate trend report
+pnpm compare weekly-*-data.jsonc
+```
+
+### 4. Progressive Capture
+
+```bash
+# Start with a few critical pages
+pnpm capture --urls "https://site.com,https://site.com/pricing" --title "Site-Check"
+
+# Later, add more pages to the same dataset
+pnpm capture --urls "https://site.com/about,https://site.com/contact" --title "Site-Check"
+
+# All pages are now in one report
+pnpm generate site-check-data.jsonc
+```
 
 ## License
 
@@ -339,6 +486,7 @@ This project follows [Semantic Versioning (SemVer)](https://semver.org/) guideli
 
 ### Version History
 
+- **v1.2.0** - Added independent before/after capture modes (`--before`, `--after`), smart data merging for re-capturing, timestamp preservation, and enhanced data persistence
 - **v1.1.0** - Added real-time image comparison, persistent comparison data storage, dedicated `compare` command, enhanced reports with comparison badges and statistics, change level classification, and improved PDF reports with comparison view
 - **v1.0.0** - Initial stable release with full feature set
 
