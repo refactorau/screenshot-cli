@@ -16,7 +16,7 @@ A TypeScript CLI tool that takes screenshots of web pages and generates styled H
 - 📋 Comprehensive error reporting and logging
 - 🚀 Intelligent wait strategies for different site types
 - 🕐 Automatic timeout adjustment for staging/WordPress sites
-- 💾 Data persistence with `.jsonc` files for report regeneration
+- 💾 Data persistence with `.jsonc` files for report regeneration (or plain `.json` files)
 - 🔍 Image comparison performed during capture with persistent storage
 - 🔄 Separate report generation from existing data files
 - 🔁 Smart data merging for re-capturing and partial updates
@@ -113,6 +113,22 @@ pnpm compare pre-deploy-data.jsonc
 pnpm generate pre-deploy-data.jsonc
 ```
 
+**Using JSON instead of JSONC:**
+
+If you prefer plain JSON files without comments, use the `--json-only` flag consistently:
+
+```bash
+# Step 1: Create JSON data file (no comments)
+pnpm capture --before --json-only --file urls.txt --title "Pre-Deploy"
+
+# Step 2: Update the same JSON file (must use --json-only again)
+pnpm capture --after --json-only --file urls.txt --title "Pre-Deploy"
+
+# Step 3: Compare and generate (works with both .json and .jsonc files)
+pnpm compare pre-deploy-data.json
+pnpm generate pre-deploy-data.json
+```
+
 **Key Benefits:**
 
 - 🕐 **Flexible Timing**: Capture before/after at any interval (minutes, hours, days)
@@ -127,6 +143,9 @@ The `compare` command adds image comparison data to existing before/after data f
 ```bash
 # Add comparison data to existing data file (if not done during capture)
 pnpm compare report-data.jsonc
+
+# Works with both JSONC and JSON files
+pnpm compare report-data.json
 
 # Customize comparison sensitivity
 pnpm compare --comparison-threshold 0.05 --min-change-threshold 1.0 report-data.jsonc
@@ -143,6 +162,9 @@ pnpm compare --ignore-antialiasing report-data.jsonc
 ```bash
 # Generate HTML report from existing data file
 pnpm generate report-data.jsonc
+
+# Works with both JSONC and JSON files
+pnpm generate report-data.json
 
 # Generate PDF report from existing data file
 pnpm generate --report-type pdf report-data.jsonc
@@ -214,6 +236,10 @@ This enables:
 - `--skip-diff-images` - Skip generating diff images for unchanged pages
 - `--comparison-only` - Only show pages with changes in reports
 
+#### Data File Format
+
+- `--json-only` - Save data file as plain JSON instead of JSONC (JSON with comments)
+
 ### Generate Options
 
 - `--report-type <type>` - Report type: html, pdf, all (default: html)
@@ -257,7 +283,7 @@ module.exports = ['https://example.com', 'https://google.com', 'https://github.c
 The tool generates:
 
 - **Screenshots**: PNG files for each URL in `output/screenshots/`
-- **Data File**: JSON file with metadata and results (`title-data.jsonc`)
+- **Data File**: JSON file with metadata and results (`title-data.jsonc` or `title-data.json` with `--json-only`)
 - **HTML Report**: Styled report with screenshot gallery (`title.html`)
 - **PDF Report**: Formatted PDF report (`title.pdf`)
 - **Comparison View**: Side-by-side before/after images (in comparison mode)
@@ -375,7 +401,38 @@ Simply open the project in VS Code and accept the extension recommendations for 
 
 ## Data Persistence & Smart Merging
 
-The tool saves all screenshot data and metadata to `.jsonc` files with intelligent merging capabilities:
+The tool saves all screenshot data and metadata to data files with intelligent merging capabilities:
+
+### Data File Formats
+
+The tool supports two data file formats:
+
+#### JSONC (Default) - JSON with Comments
+
+- **Extension**: `.jsonc`
+- **Features**: Rich comments explaining data structure and metadata
+- **Use case**: Human-readable files for documentation and understanding
+- **Example**: `report-data.jsonc`
+
+#### JSON - Plain JSON
+
+- **Extension**: `.json`
+- **Features**: Clean JSON without comments, smaller file size
+- **Use case**: Automated processing, CI/CD pipelines, minimal storage
+- **Flag**: Use `--json-only` flag during capture
+- **Example**: `report-data.json`
+
+**Important:** When using independent before/after capture modes (`--before`/`--after`), be consistent with the `--json-only` flag:
+
+```bash
+# ✅ Correct - consistent flag usage
+pnpm capture --before --json-only --title "test" -u "https://example.com"
+pnpm capture --after --json-only --title "test" -u "https://example.com"
+
+# ❌ Problematic - inconsistent flag usage creates separate files
+pnpm capture --before --json-only --title "test" -u "https://example.com"  # Creates test-data.json
+pnpm capture --after --title "test" -u "https://example.com"              # Creates test-data.jsonc
+```
 
 ### Core Features
 
@@ -383,6 +440,7 @@ The tool saves all screenshot data and metadata to `.jsonc` files with intellige
 - Switch between HTML and PDF formats
 - Share data files for collaborative reporting
 - Archive screenshot sessions with full metadata
+- Both JSONC and JSON formats supported by all commands (`compare`, `generate`)
 
 ### Smart Data Merging
 
@@ -422,6 +480,20 @@ pnpm capture --after --file production-urls.txt --title "Deploy-v2.1"
 # Generate comparison report
 pnpm compare deploy-v2.1-data.jsonc
 pnpm generate --report-type all deploy-v2.1-data.jsonc
+```
+
+**Using JSON format:**
+
+```bash
+# Before deployment (creates .json file)
+pnpm capture --before --json-only --file production-urls.txt --title "Deploy-v2.1"
+
+# After deployment (updates same .json file)
+pnpm capture --after --json-only --file production-urls.txt --title "Deploy-v2.1"
+
+# Generate comparison report
+pnpm compare deploy-v2.1-data.json
+pnpm generate --report-type all deploy-v2.1-data.json
 ```
 
 ### 2. A/B Testing
@@ -486,6 +558,7 @@ This project follows [Semantic Versioning (SemVer)](https://semver.org/) guideli
 
 ### Version History
 
+- **v1.2.1** - Added `--json-only` flag for plain JSON output (without comments) as an alternative to JSONC format
 - **v1.2.0** - Added independent before/after capture modes (`--before`, `--after`), smart data merging for re-capturing, timestamp preservation, and enhanced data persistence
 - **v1.1.0** - Added real-time image comparison, persistent comparison data storage, dedicated `compare` command, enhanced reports with comparison badges and statistics, change level classification, and improved PDF reports with comparison view
 - **v1.0.0** - Initial stable release with full feature set

@@ -55,6 +55,7 @@ program
   .option('--min-change-threshold <threshold>', 'Minimum change percentage to highlight (0-100)', '0.5')
   .option('--skip-diff-images', 'Skip generating diff images for unchanged pages')
   .option('--comparison-only', 'Only show pages with changes in reports')
+  .option('--json-only', 'Save data file as plain JSON instead of JSONC (JSON with comments)')
   .action(async (options) => {
     try {
       const startTime = Date.now();
@@ -111,7 +112,7 @@ program
       };
 
       // Generate filenames based on title
-      const filenames = generateFilenames(options.title, screenshotOptions.output);
+      const filenames = generateFilenames(options.title, screenshotOptions.output, options.jsonOnly);
 
       const screenshotter = new Screenshotter();
       const htmlGenerator = new HtmlGenerator();
@@ -321,6 +322,7 @@ program
           },
           beforePhase,
           afterPhase,
+          options.jsonOnly,
         );
 
         console.log(chalk.green(`✅ Data file saved: ${filenames.dataFile}`));
@@ -375,7 +377,7 @@ program
 program
   .command('generate')
   .description('Generate reports from existing data file')
-  .argument('<data-file>', 'Path to the data file (.jsonc)')
+  .argument('<data-file>', 'Path to the data file (.jsonc or .json)')
   .option('--report-type <type>', 'Report type: html, pdf, all', 'html')
   .action(
     async (
@@ -414,7 +416,7 @@ program
 program
   .command('compare')
   .description('Add or update image comparison data in existing before/after data file')
-  .argument('<data-file>', 'Path to the before/after data file (.jsonc)')
+  .argument('<data-file>', 'Path to the before/after data file (.jsonc or .json)')
   .option('--comparison-threshold <threshold>', 'Pixelmatch threshold for comparison (0-1)', '0.1')
   .option('--min-change-threshold <threshold>', 'Minimum change percentage to highlight (0-100)', '0.5')
   .option('--skip-diff-images', 'Skip generating diff images for unchanged pages')
@@ -537,6 +539,7 @@ program
           resolvedDataFile.metadata.options,
           beforePhase,
           afterPhase,
+          dataFilePath.endsWith('.json'),
         );
 
         console.log(chalk.green(`✅ Data file updated with comparison data for ${updatedCount} results`));
@@ -633,8 +636,9 @@ async function generateReportsFromDataFile(generateOptions: GenerateOptions): Pr
   console.log(chalk.green(`✅ Data file loaded: ${dataFile.metadata.totalUrls} URLs`));
 
   const outputDir = dirname(dataFilePath);
-  const reportTitle = basename(dataFilePath, '-data.jsonc');
-  const filenames = generateFilenames(reportTitle, outputDir);
+  const isJsonFile = dataFilePath.endsWith('.json');
+  const reportTitle = basename(dataFilePath, isJsonFile ? '-data.json' : '-data.jsonc');
+  const filenames = generateFilenames(reportTitle, outputDir, isJsonFile);
 
   // Generate reports based on type
   if (reportType === ReportType.HTML || reportType === ReportType.ALL) {

@@ -16,10 +16,11 @@ export class DataPersistence {
     },
     beforePhase?: { startTime: Date; endTime: Date; duration: string },
     afterPhase?: { startTime: Date; endTime: Date; duration: string },
+    useJsonOnly = false,
   ): Promise<void> {
     const dataFile: DataFile = {
       metadata: {
-        version: '1.0.0',
+        version: '1.2.1',
         mode: reportData.mode,
         generatedAt: reportData.generatedAt.toISOString(),
         totalUrls: reportData.totalUrls,
@@ -71,7 +72,9 @@ export class DataPersistence {
       })),
     };
 
-    const jsonContent = this.generateJSONCContent(dataFile);
+    const content = useJsonOnly
+      ? JSON.stringify(dataFile, null, 2)
+      : this.generateJSONCContent(dataFile);
 
     // Ensure directory exists
     const dir = path.dirname(dataFilePath);
@@ -79,7 +82,7 @@ export class DataPersistence {
       fs.mkdirSync(dir, { recursive: true });
     }
 
-    await fs.promises.writeFile(dataFilePath, jsonContent, 'utf8');
+    await fs.promises.writeFile(dataFilePath, content, 'utf8');
   }
 
   static async loadDataFile(dataFilePath: string): Promise<DataFile> {

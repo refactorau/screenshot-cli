@@ -127,10 +127,11 @@ export function titleToFilename(title: string): string {
     .replace(/^-|-$/g, ''); // Remove leading/trailing hyphens
 }
 
-export function generateFilenames(title: string, outputDir: string) {
+export function generateFilenames(title: string, outputDir: string, useJsonOnly = false) {
   const safeTitle = titleToFilename(title);
+  const dataExtension = useJsonOnly ? '.json' : '.jsonc';
   return {
-    dataFile: `${outputDir}/${safeTitle}-data.jsonc`,
+    dataFile: `${outputDir}/${safeTitle}-data${dataExtension}`,
     htmlFile: `${outputDir}/${safeTitle}.html`,
     pdfFile: `${outputDir}/${safeTitle}.pdf`,
     safeTitle,
