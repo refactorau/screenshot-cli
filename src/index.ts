@@ -48,7 +48,8 @@ program
   .option('-t, --timeout <timeout>', 'Page load timeout in milliseconds', '30000')
   .option('-r, --max-retries <retries>', 'Maximum retry attempts for network errors', '3')
   .option('--retry-delay <delay>', 'Delay between retries in milliseconds', '2000')
-  .option('--wait-strategy <strategy>', 'Page load wait strategy: networkidle, load, domcontentloaded', 'load')
+  .option('--wait-strategy <strategy>', 'Page load wait strategy: networkidle, load, domcontentloaded, images', 'load')
+  .option('--image-wait-timeout <timeout>', 'Timeout for image loading in milliseconds (when using images wait strategy)', '10000')
   .option('--report-type <type>', 'Report type: html, pdf, all', 'html')
   .option('--title <title>', 'Report title (used for filenames)', 'Report')
   .option('--comparison-threshold <threshold>', 'Pixelmatch threshold for comparison (0-1)', '0.1')
@@ -106,7 +107,8 @@ program
         timeout: parseInt(options.timeout),
         maxRetries: parseInt(options.maxRetries),
         retryDelay: parseInt(options.retryDelay),
-        waitStrategy: options.waitStrategy as 'networkidle' | 'load' | 'domcontentloaded',
+        waitStrategy: options.waitStrategy as 'networkidle' | 'load' | 'domcontentloaded' | 'images',
+        imageWaitTimeout: parseInt(options.imageWaitTimeout),
         reportType: options.reportType as ReportType,
         title: options.title,
       };

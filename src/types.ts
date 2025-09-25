@@ -10,7 +10,8 @@ export interface ScreenshotOptions {
   urlsFile?: string;
   maxRetries?: number;
   retryDelay?: number;
-  waitStrategy?: 'networkidle' | 'load' | 'domcontentloaded';
+  waitStrategy?: 'networkidle' | 'load' | 'domcontentloaded' | 'images';
+  imageWaitTimeout?: number;
   reportType?: ReportType;
   title?: string;
 }

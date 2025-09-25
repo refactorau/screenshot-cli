@@ -20,7 +20,7 @@ export class DataPersistence {
   ): Promise<void> {
     const dataFile: DataFile = {
       metadata: {
-        version: '1.2.1',
+        version: '1.2.2',
         mode: reportData.mode,
         generatedAt: reportData.generatedAt.toISOString(),
         totalUrls: reportData.totalUrls,

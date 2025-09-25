@@ -14,7 +14,7 @@ A TypeScript CLI tool that takes screenshots of web pages and generates styled H
 - 🔧 Configurable viewport sizes and timeouts
 - 🔄 Automatic retry mechanism for network errors
 - 📋 Comprehensive error reporting and logging
-- 🚀 Intelligent wait strategies for different site types
+- 🚀 Intelligent wait strategies for different site types (including image loading detection)
 - 🕐 Automatic timeout adjustment for staging/WordPress sites
 - 💾 Data persistence with `.jsonc` files for report regeneration (or plain `.json` files)
 - 🔍 Image comparison performed during capture with persistent storage
@@ -218,7 +218,8 @@ This enables:
 - `-w, --width <width>` - Viewport width (default: 1920)
 - `-h, --height <height>` - Viewport height (default: 1080)
 - `-t, --timeout <timeout>` - Page load timeout in milliseconds (default: 30000)
-- `--wait-strategy <strategy>` - Page load wait strategy: networkidle, load, domcontentloaded (default: load)
+- `--wait-strategy <strategy>` - Page load wait strategy: networkidle, load, domcontentloaded, images (default: load)
+- `--image-wait-timeout <timeout>` - Timeout for image loading in milliseconds (when using images wait strategy, default: 10000)
 
 #### Network & Reliability
 
@@ -350,6 +351,9 @@ pnpm capture --file urls.txt --wait-strategy load
 
 # For sites with critical late-loading content (slower, may timeout)
 pnpm capture --file urls.txt --wait-strategy networkidle
+
+# For ensuring all images are loaded before screenshot (recommended for image-heavy sites)
+pnpm capture --file urls.txt --wait-strategy images --image-wait-timeout 15000
 
 # For fastest execution (may miss some images/styles)
 pnpm capture --file urls.txt --wait-strategy domcontentloaded
@@ -558,6 +562,7 @@ This project follows [Semantic Versioning (SemVer)](https://semver.org/) guideli
 
 ### Version History
 
+- **v1.2.2** - Added intelligent image loading detection with new `images` wait strategy and `--image-wait-timeout` option for ensuring all images (including lazy-loaded and background images) are fully loaded before screenshots
 - **v1.2.1** - Added `--json-only` flag for plain JSON output (without comments) as an alternative to JSONC format
 - **v1.2.0** - Added independent before/after capture modes (`--before`, `--after`), smart data merging for re-capturing, timestamp preservation, and enhanced data persistence
 - **v1.1.0** - Added real-time image comparison, persistent comparison data storage, dedicated `compare` command, enhanced reports with comparison badges and statistics, change level classification, and improved PDF reports with comparison view
