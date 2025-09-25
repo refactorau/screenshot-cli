@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import packageJson from '../package.json';
 import { DataFile, ReportData } from './types';
 
 export class DataPersistence {
@@ -20,7 +21,7 @@ export class DataPersistence {
   ): Promise<void> {
     const dataFile: DataFile = {
       metadata: {
-        version: '1.2.2',
+        version: packageJson.version,
         mode: reportData.mode,
         generatedAt: reportData.generatedAt.toISOString(),
         totalUrls: reportData.totalUrls,

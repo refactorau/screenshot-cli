@@ -241,6 +241,10 @@ This enables:
 
 - `--json-only` - Save data file as plain JSON instead of JSONC (JSON with comments)
 
+#### Logging & Debugging
+
+- `-v, --verbose` - Enable verbose logging (includes detailed image loading progress when using `images` wait strategy)
+
 ### Generate Options
 
 - `--report-type <type>` - Report type: html, pdf, all (default: html)
@@ -354,6 +358,9 @@ pnpm capture --file urls.txt --wait-strategy networkidle
 
 # For ensuring all images are loaded before screenshot (recommended for image-heavy sites)
 pnpm capture --file urls.txt --wait-strategy images --image-wait-timeout 15000
+
+# With verbose logging to see detailed image loading progress
+pnpm capture --file urls.txt --wait-strategy images --verbose
 
 # For fastest execution (may miss some images/styles)
 pnpm capture --file urls.txt --wait-strategy domcontentloaded
@@ -562,6 +569,7 @@ This project follows [Semantic Versioning (SemVer)](https://semver.org/) guideli
 
 ### Version History
 
+- **v1.2.3** - Added `--verbose` flag for detailed image loading progress logging when using `images` wait strategy
 - **v1.2.2** - Added intelligent image loading detection with new `images` wait strategy and `--image-wait-timeout` option for ensuring all images (including lazy-loaded and background images) are fully loaded before screenshots
 - **v1.2.1** - Added `--json-only` flag for plain JSON output (without comments) as an alternative to JSONC format
 - **v1.2.0** - Added independent before/after capture modes (`--before`, `--after`), smart data merging for re-capturing, timestamp preservation, and enhanced data persistence

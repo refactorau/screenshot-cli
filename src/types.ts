@@ -14,6 +14,7 @@ export interface ScreenshotOptions {
   imageWaitTimeout?: number;
   reportType?: ReportType;
   title?: string;
+  verbose?: boolean;
 }
 
 export enum ReportType {

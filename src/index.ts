@@ -57,6 +57,7 @@ program
   .option('--skip-diff-images', 'Skip generating diff images for unchanged pages')
   .option('--comparison-only', 'Only show pages with changes in reports')
   .option('--json-only', 'Save data file as plain JSON instead of JSONC (JSON with comments)')
+  .option('-v, --verbose', 'Enable verbose logging (includes detailed image loading progress)')
   .action(async (options) => {
     try {
       const startTime = Date.now();
@@ -111,6 +112,7 @@ program
         imageWaitTimeout: parseInt(options.imageWaitTimeout),
         reportType: options.reportType as ReportType,
         title: options.title,
+        verbose: options.verbose,
       };
 
       // Generate filenames based on title

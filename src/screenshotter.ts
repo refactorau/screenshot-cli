@@ -61,8 +61,10 @@ export class Screenshotter {
     return results;
   }
 
-  private async waitForImages(page: any, timeout: number = 10000): Promise<void> {
-    console.log(`🖼️  Starting image loading detection with ${timeout}ms timeout...`);
+  private async waitForImages(page: any, timeout: number = 10000, verbose: boolean = false): Promise<void> {
+    if (verbose) {
+      console.log(`🖼️  Starting image loading detection with ${timeout}ms timeout...`);
+    }
 
     try {
       // First, get initial image status for logging
@@ -97,23 +99,27 @@ export class Screenshotter {
         })()
       `);
 
-      console.log(`📊 Image analysis:`);
-      console.log(`   • Found ${initialStatus.totalImages} <img> elements`);
-      console.log(`   • Found ${initialStatus.totalBackgroundImages} elements with background images`);
+      if (verbose) {
+        console.log(`📊 Image analysis:`);
+        console.log(`   • Found ${initialStatus.totalImages} <img> elements`);
+        console.log(`   • Found ${initialStatus.totalBackgroundImages} elements with background images`);
+      }
 
       // Log details of each image
-      initialStatus.images.forEach((img: any) => {
-        const status = img.complete && img.naturalHeight > 0 ? '✅ Loaded' : '⏳ Loading';
-        const lazyInfo = img.lazyLoading ? ' (LAZY)' : '';
-        const visibleInfo = img.visible ? '' : ' (HIDDEN)';
-        console.log(`   ${status} Image ${img.index}: ${img.src.substring(0, 80)}...${lazyInfo}${visibleInfo}`);
-        if (!img.complete || img.naturalHeight === 0) {
-          console.log(`     ↳ Dimensions: ${img.naturalWidth}x${img.naturalHeight}, Loading: ${img.loading}`);
-        }
-      });
+      if (verbose) {
+        initialStatus.images.forEach((img: any) => {
+          const status = img.complete && img.naturalHeight > 0 ? '✅ Loaded' : '⏳ Loading';
+          const lazyInfo = img.lazyLoading ? ' (LAZY)' : '';
+          const visibleInfo = img.visible ? '' : ' (HIDDEN)';
+          console.log(`   ${status} Image ${img.index}: ${img.src.substring(0, 80)}...${lazyInfo}${visibleInfo}`);
+          if (!img.complete || img.naturalHeight === 0) {
+            console.log(`     ↳ Dimensions: ${img.naturalWidth}x${img.naturalHeight}, Loading: ${img.loading}`);
+          }
+        });
+      }
 
       // Log background images
-      if (initialStatus.backgroundImages.length > 0) {
+      if (verbose && initialStatus.backgroundImages.length > 0) {
         console.log(`🎨 Background images found:`);
         initialStatus.backgroundImages.forEach((bg: any) => {
           console.log(`   • ${bg.tagName}.${bg.className}: ${bg.backgroundImage.substring(0, 80)}...`);
@@ -121,7 +127,9 @@ export class Screenshotter {
       }
 
       // Scroll through page to trigger lazy loading
-      console.log(`📜 Scrolling through page to trigger lazy loading...`);
+      if (verbose) {
+        console.log(`📜 Scrolling through page to trigger lazy loading...`);
+      }
       await page.evaluate(`
         (function() {
           return new Promise((resolve) => {
@@ -149,14 +157,14 @@ export class Screenshotter {
 
       // Now wait for images to load with enhanced logging
       const result = await page.evaluate(`
-        (async function(imageTimeout) {
+        (async function(imageTimeout, verbose) {
           const startTime = Date.now();
           const images = Array.from(document.querySelectorAll('img'));
           let loadedCount = 0;
           let errorCount = 0;
           let timeoutCount = 0;
           
-          console.log('🔄 Starting to wait for ' + images.length + ' images...');
+          if (verbose) console.log('🔄 Starting to wait for ' + images.length + ' images...');
           
           const imagePromises = images.map((img, index) => {
             return new Promise((resolve) => {
@@ -164,7 +172,7 @@ export class Screenshotter {
               
               // If image is already loaded
               if (img.complete && img.naturalHeight !== 0) {
-                console.log('✅ Image ' + imgIndex + ' already loaded: ' + img.src.substring(0, 60) + '...');
+                if (verbose) console.log('✅ Image ' + imgIndex + ' already loaded: ' + img.src.substring(0, 60) + '...');
                 loadedCount++;
                 resolve({ status: 'already-loaded', index: imgIndex, src: img.src });
                 return;
@@ -172,7 +180,7 @@ export class Screenshotter {
 
               // Set up timeout for individual image
               const imgTimeout = setTimeout(() => {
-                console.warn('⏰ Image ' + imgIndex + ' timeout after ' + imageTimeout + 'ms: ' + img.src);
+                if (verbose) console.warn('⏰ Image ' + imgIndex + ' timeout after ' + imageTimeout + 'ms: ' + img.src);
                 timeoutCount++;
                 resolve({ status: 'timeout', index: imgIndex, src: img.src });
               }, imageTimeout);
@@ -185,14 +193,14 @@ export class Screenshotter {
               };
 
               const onLoad = () => {
-                console.log('✅ Image ' + imgIndex + ' loaded: ' + img.src.substring(0, 60) + '...');
+                if (verbose) console.log('✅ Image ' + imgIndex + ' loaded: ' + img.src.substring(0, 60) + '...');
                 cleanup();
                 loadedCount++;
                 resolve({ status: 'loaded', index: imgIndex, src: img.src });
               };
 
               const onError = () => {
-                console.warn('❌ Image ' + imgIndex + ' failed to load: ' + img.src);
+                if (verbose) console.warn('❌ Image ' + imgIndex + ' failed to load: ' + img.src);
                 cleanup();
                 errorCount++;
                 resolve({ status: 'error', index: imgIndex, src: img.src });
@@ -201,7 +209,7 @@ export class Screenshotter {
               img.addEventListener('load', onLoad);
               img.addEventListener('error', onError);
               
-              console.log('⏳ Waiting for image ' + imgIndex + ': ' + img.src.substring(0, 60) + '...');
+              if (verbose) console.log('⏳ Waiting for image ' + imgIndex + ': ' + img.src.substring(0, 60) + '...');
             });
           });
 
@@ -218,14 +226,16 @@ export class Screenshotter {
             timeoutCount,
             results
           };
-        })(${timeout});
+        })(${timeout}, ${verbose});
       `);
 
-      console.log(`📈 Image loading completed in ${result.duration}ms:`);
-      console.log(`   • Total images: ${result.totalImages}`);
-      console.log(`   • Successfully loaded: ${result.loadedCount}`);
-      console.log(`   • Failed to load: ${result.errorCount}`);
-      console.log(`   • Timed out: ${result.timeoutCount}`);
+      if (verbose) {
+        console.log(`📈 Image loading completed in ${result.duration}ms:`);
+        console.log(`   • Total images: ${result.totalImages}`);
+        console.log(`   • Successfully loaded: ${result.loadedCount}`);
+        console.log(`   • Failed to load: ${result.errorCount}`);
+        console.log(`   • Timed out: ${result.timeoutCount}`);
+      }
 
       // Log final status
       const finalStatus = await page.evaluate(`
@@ -247,14 +257,16 @@ export class Screenshotter {
         })()
       `);
 
-      if (finalStatus.unloadedCount > 0) {
-        console.warn(`⚠️  ${finalStatus.unloadedCount} images still not fully loaded:`);
-        finalStatus.unloadedImages.forEach((img: any, index: number) => {
-          console.warn(`   ${index + 1}. ${img.src}`);
-          console.warn(`      Complete: ${img.complete}, Dimensions: ${img.naturalWidth}x${img.naturalHeight}, Visible: ${img.visible}`);
-        });
-      } else {
-        console.log(`✅ All images successfully loaded!`);
+      if (verbose) {
+        if (finalStatus.unloadedCount > 0) {
+          console.warn(`⚠️  ${finalStatus.unloadedCount} images still not fully loaded:`);
+          finalStatus.unloadedImages.forEach((img: any, index: number) => {
+            console.warn(`   ${index + 1}. ${img.src}`);
+            console.warn(`      Complete: ${img.complete}, Dimensions: ${img.naturalWidth}x${img.naturalHeight}, Visible: ${img.visible}`);
+          });
+        } else {
+          console.log(`✅ All images successfully loaded!`);
+        }
       }
 
     } catch (error) {
@@ -334,7 +346,7 @@ export class Screenshotter {
       // If using images wait strategy, wait for all images to load
       if (options.waitStrategy === 'images') {
         const imageTimeout = options.imageWaitTimeout || 10000;
-        await this.waitForImages(page, imageTimeout);
+        await this.waitForImages(page, imageTimeout, options.verbose);
       }
 
       // Wait a bit more for dynamic content
